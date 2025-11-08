@@ -1,0 +1,462 @@
+---
+# Velero Setup for Kubernetes Backup & Disaster Recovery
+# Production-Ready Configuration
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: velero
+  labels:
+    app.kubernetes.io/name: velero
+
+---
+# Secret for AWS S3 (Velero Storage)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: velero-aws-credentials
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+type: Opaque
+stringData:
+  cloud: |
+    [default]
+    aws_access_key_id = YOUR_AWS_ACCESS_KEY
+    aws_secret_access_key = YOUR_AWS_SECRET_KEY
+
+---
+# ServiceAccount for Velero
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+
+---
+# ClusterRole for Velero
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: velero
+  labels:
+    app.kubernetes.io/name: velero
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims", "persistentvolumes"]
+    verbs: ["get", "list", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "daemonsets", "statefulsets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list"]
+  - apiGroups: ["velero.io"]
+    resources: ["backups", "schedules", "restores", "resticrepositories"]
+    verbs: ["*"]
+
+---
+# ClusterRoleBinding for Velero
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: velero
+  labels:
+    app.kubernetes.io/name: velero
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: velero
+subjects:
+  - kind: ServiceAccount
+    name: velero
+    namespace: velero
+
+---
+# Deployment for Velero
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: velero
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: velero
+    spec:
+      serviceAccountName: velero
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      
+      containers:
+        - name: velero
+          image: velero/velero:v1.12.0
+          imagePullPolicy: IfNotPresent
+          
+          ports:
+            - containerPort: 8085
+              name: metrics
+          
+          command:
+            - /velero
+            - server
+          
+          args:
+            - --secret-file=/credentials/cloud
+            - --use-volume-snapshots=true
+            - --snapshot-location=aws
+            - --default-backup-storage-location=aws
+          
+          env:
+            - name: VELERO_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: AWS_SHARED_CREDENTIALS_FILE
+              value: /credentials/cloud
+            - name: AWS_REGION
+              value: "us-east-1"
+          
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: credentials
+              mountPath: /credentials
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: credentials
+          secret:
+            secretName: velero-aws-credentials
+        - name: tmp
+          emptyDir: {}
+
+---
+# Service for Velero Metrics
+apiVersion: v1
+kind: Service
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8085
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: velero
+
+---
+# BackupStorageLocation for AWS S3
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: aws
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  provider: aws
+  bucket: pivori-backups
+  config:
+    region: us-east-1
+    s3ForcePathStyle: "false"
+    s3Url: https://s3.amazonaws.com
+
+---
+# VolumeSnapshotLocation for AWS EBS
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: aws
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  provider: aws
+  config:
+    region: us-east-1
+
+---
+# Daily Backup Schedule
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-backup
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  schedule: "0 2 * * *"  # 2 AM daily
+  template:
+    includedNamespaces:
+      - pivori-production
+      - vault
+      - monitoring
+    storageLocation: aws
+    volumeSnapshotLocation: aws
+    ttl: 720h  # 30 days retention
+    includedResources:
+      - "*"
+    excludedResources:
+      - nodes
+      - events
+      - events.events.k8s.io
+    hooks:
+      resources:
+        - name: pre-backup-hook
+          includedNamespaces:
+            - pivori-production
+          pre:
+            - exec:
+                container: postgres
+                command:
+                  - /bin/sh
+                  - -c
+                  - pg_dump -U postgres pivori > /tmp/backup.sql
+          post:
+            - exec:
+                container: postgres
+                command:
+                  - /bin/sh
+                  - -c
+                  - rm /tmp/backup.sql
+
+---
+# Hourly Backup Schedule (for critical data)
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: hourly-critical-backup
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  schedule: "0 * * * *"  # Every hour
+  template:
+    includedNamespaces:
+      - pivori-production
+    storageLocation: aws
+    volumeSnapshotLocation: aws
+    ttl: 168h  # 7 days retention
+    includedResources:
+      - persistentvolumeclaims
+      - persistentvolumes
+      - secrets
+      - configmaps
+    excludedResources:
+      - nodes
+      - events
+
+---
+# Weekly Full Backup
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: weekly-full-backup
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  schedule: "0 3 * * 0"  # Sunday 3 AM
+  template:
+    includedNamespaces:
+      - "*"
+    storageLocation: aws
+    volumeSnapshotLocation: aws
+    ttl: 2160h  # 90 days retention
+    includedResources:
+      - "*"
+    excludedResources:
+      - nodes
+      - events
+
+---
+# NetworkPolicy for Velero
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: velero-network-policy
+  namespace: velero
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: velero
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8085
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: pivori-production
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+# Prometheus ServiceMonitor for Velero
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: velero
+  endpoints:
+    - port: metrics
+      interval: 30s
+
+---
+# PrometheusRule for Velero Alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: velero-alerts
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  groups:
+    - name: velero.rules
+      interval: 30s
+      rules:
+        - alert: VeleroBackupFailed
+          expr: increase(velero_backup_failure_total[1h]) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Velero backup failed"
+            description: "Velero backup has failed. Check logs for details."
+        
+        - alert: VeleroBackupPartialFailure
+          expr: increase(velero_backup_partial_failure_total[1h]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Velero backup partial failure"
+            description: "Velero backup completed with partial failures."
+        
+        - alert: VeleroBackupNotCompleted
+          expr: time() - velero_backup_last_successful_timestamp > 86400
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Velero backup not completed in 24 hours"
+            description: "Last successful backup was more than 24 hours ago."
+        
+        - alert: VeleroRestoreFailed
+          expr: increase(velero_restore_failure_total[1h]) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Velero restore failed"
+            description: "Velero restore has failed. Check logs for details."
+
+---
+# Example: Manual Backup
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: manual-backup-$(date +%s)
+  namespace: velero
+spec:
+  includedNamespaces:
+    - pivori-production
+  storageLocation: aws
+  volumeSnapshotLocation: aws
+  ttl: 720h
+  includedResources:
+    - "*"
+  excludedResources:
+    - nodes
+    - events
+
+---
+# Example: Restore from Backup
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: restore-from-backup
+  namespace: velero
+spec:
+  backupName: daily-backup-20240101
+  includedNamespaces:
+    - pivori-production
+  restorePVs: true
+  restoreStatus:
+    includedResources:
+      - "*"
+

@@ -1,0 +1,462 @@
+---
+# HashiCorp Vault Setup for Centralized Secret Management
+# Production-Ready Configuration
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vault
+  labels:
+    app.kubernetes.io/name: vault
+
+---
+# ServiceAccount for Vault
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+
+---
+# ClusterRole for Vault
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vault
+  labels:
+    app.kubernetes.io/name: vault
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "list", "watch"]
+
+---
+# ClusterRoleBinding for Vault
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault
+  labels:
+    app.kubernetes.io/name: vault
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vault
+subjects:
+  - kind: ServiceAccount
+    name: vault
+    namespace: vault
+
+---
+# ConfigMap for Vault Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+data:
+  vault.hcl: |
+    ui = true
+    
+    listener "tcp" {
+      address       = "0.0.0.0:8200"
+      tls_cert_file = "/vault/config/tls/tls.crt"
+      tls_key_file  = "/vault/config/tls/tls.key"
+    }
+    
+    storage "raft" {
+      path = "/vault/data"
+      node_id = "vault-0"
+    }
+    
+    service_registration "kubernetes" {}
+
+---
+# PersistentVolumeClaim for Vault Data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vault-data
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+# StatefulSet for Vault
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  serviceName: vault
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault
+    spec:
+      serviceAccountName: vault
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        fsGroup: 1000
+      
+      containers:
+        - name: vault
+          image: vault:1.15.0
+          imagePullPolicy: IfNotPresent
+          
+          ports:
+            - containerPort: 8200
+              name: http
+              protocol: TCP
+            - containerPort: 8201
+              name: cluster
+              protocol: TCP
+          
+          env:
+            - name: VAULT_ADDR
+              value: "https://127.0.0.1:8200"
+            - name: VAULT_API_ADDR
+              value: "https://$(POD_IP):8200"
+            - name: VAULT_CLUSTER_ADDR
+              value: "https://$(POD_NAME).vault.vault.svc.cluster.local:8201"
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VAULT_SKIP_VERIFY
+              value: "true"
+          
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          livenessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true
+              port: 8200
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true
+              port: 8200
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          volumeMounts:
+            - name: vault-config
+              mountPath: /vault/config
+              readOnly: true
+            - name: vault-data
+              mountPath: /vault/data
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: vault-config
+          configMap:
+            name: vault-config
+        - name: tmp
+          emptyDir: {}
+  
+  volumeClaimTemplates:
+    - metadata:
+        name: vault-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+# Service for Vault
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 8200
+      targetPort: 8200
+      protocol: TCP
+      name: http
+    - port: 8201
+      targetPort: 8201
+      protocol: TCP
+      name: cluster
+  selector:
+    app.kubernetes.io/name: vault
+
+---
+# Service for Vault UI
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-ui
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8200
+      targetPort: 8200
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: vault
+
+---
+# Ingress for Vault UI
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: vault.pivori.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vault-ui
+                port:
+                  number: 8200
+  tls:
+    - hosts:
+        - vault.pivori.app
+      secretName: vault-tls
+
+---
+# NetworkPolicy for Vault
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-network-policy
+  namespace: vault
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: pivori-production
+      ports:
+        - protocol: TCP
+          port: 8200
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8201
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+---
+# PodDisruptionBudget for Vault
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vault
+  namespace: vault
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+
+---
+# Vault Auth Method for Kubernetes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-auth-kubernetes
+  namespace: vault
+data:
+  auth-kubernetes.sh: |
+    #!/bin/bash
+    
+    # Enable Kubernetes auth method
+    vault auth enable kubernetes
+    
+    # Configure Kubernetes auth
+    vault write auth/kubernetes/config \
+      kubernetes_host="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT" \
+      kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+      token_reviewer_jwt=@/var/run/secrets/kubernetes.io/serviceaccount/token
+    
+    # Create policy for services
+    vault policy write pivori-policy - <<EOF
+    path "secret/data/pivori/*" {
+      capabilities = ["read", "list"]
+    }
+    path "secret/metadata/pivori/*" {
+      capabilities = ["list"]
+    }
+    path "database/creds/pivori-*" {
+      capabilities = ["read"]
+    }
+    path "pki/issue/pivori" {
+      capabilities = ["create", "update"]
+    }
+    EOF
+    
+    # Create role for services
+    vault write auth/kubernetes/role/pivori-role \
+      bound_service_account_names=default \
+      bound_service_account_namespaces=pivori-production \
+      policies=pivori-policy \
+      ttl=24h
+
+---
+# Example: Secret in Vault
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-secret-example
+  namespace: vault
+data:
+  create-secret.sh: |
+    #!/bin/bash
+    
+    # Enable KV v2 secret engine
+    vault secrets enable -version=2 kv
+    
+    # Create database credentials
+    vault kv put secret/pivori/database \
+      username="admin" \
+      password="secure-password-here" \
+      host="postgres.default.svc.cluster.local" \
+      port="5432" \
+      database="pivori"
+    
+    # Create API keys
+    vault kv put secret/pivori/api-keys \
+      stripe-key="sk_test_..." \
+      openai-key="sk-..." \
+      github-token="ghp_..."
+    
+    # Create TLS certificates
+    vault kv put secret/pivori/tls \
+      cert=@/path/to/cert.pem \
+      key=@/path/to/key.pem
+
+---
+# Vault Agent Injector (Optional)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-agent-config
+  namespace: vault
+data:
+  vault-agent.hcl: |
+    pid_file = "/tmp/pidfile"
+    
+    vault {
+      address = "https://vault.vault.svc.cluster.local:8200"
+    }
+    
+    auto_auth {
+      method "kubernetes" {
+        mount_path = "auth/kubernetes"
+        config = {
+          role = "pivori-role"
+        }
+      }
+      
+      sink "file" {
+        config = {
+          path = "/tmp/vault/.vault-token"
+        }
+      }
+    }
+    
+    cache {
+      use_auto_auth_token = true
+    }
+    
+    listener "unix" {
+      address = "/tmp/vault/agent.sock"
+      tls_disable = true
+    }
+

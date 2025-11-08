@@ -1,0 +1,464 @@
+---
+# Audit Logging Setup for Kubernetes & Applications
+# Production-Ready Configuration
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+
+---
+# ConfigMap for Audit Policy
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audit-policy
+  namespace: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+data:
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    
+    # Log all requests at the Metadata level
+    rules:
+      # Log pod exec at RequestResponse level
+      - level: RequestResponse
+        verbs: ["exec"]
+        resources:
+          - group: ""
+            resources: ["pods", "pods/exec"]
+        omitStages:
+          - RequestReceived
+      
+      # Log secret access at RequestResponse level
+      - level: RequestResponse
+        verbs: ["get", "list", "watch"]
+        resources:
+          - group: ""
+            resources: ["secrets"]
+        omitStages:
+          - RequestReceived
+      
+      # Log authentication events
+      - level: RequestResponse
+        verbs: ["create", "update", "patch", "delete"]
+        resources:
+          - group: ""
+            resources: ["serviceaccounts", "users", "groups"]
+        omitStages:
+          - RequestReceived
+      
+      # Log RBAC changes
+      - level: RequestResponse
+        verbs: ["create", "update", "patch", "delete"]
+        resources:
+          - group: "rbac.authorization.k8s.io"
+            resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
+        omitStages:
+          - RequestReceived
+      
+      # Log network policy changes
+      - level: RequestResponse
+        verbs: ["create", "update", "patch", "delete"]
+        resources:
+          - group: "networking.k8s.io"
+            resources: ["networkpolicies"]
+        omitStages:
+          - RequestReceived
+      
+      # Log storage changes
+      - level: RequestResponse
+        verbs: ["create", "update", "patch", "delete"]
+        resources:
+          - group: ""
+            resources: ["persistentvolumes", "persistentvolumeclaims"]
+        omitStages:
+          - RequestReceived
+      
+      # Log all other requests at Metadata level
+      - level: Metadata
+        omitStages:
+          - RequestReceived
+      
+      # Omit watch events
+      - level: None
+        verbs: ["watch"]
+
+---
+# ServiceAccount for Audit Logger
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: audit-logger
+  namespace: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+
+---
+# ClusterRole for Audit Logger
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: audit-logger
+  labels:
+    app.kubernetes.io/name: audit-logging
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "get", "list", "watch"]
+  - apiGroups: ["audit.k8s.io"]
+    resources: ["events"]
+    verbs: ["create", "get", "list", "watch"]
+
+---
+# ClusterRoleBinding for Audit Logger
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: audit-logger
+  labels:
+    app.kubernetes.io/name: audit-logging
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: audit-logger
+subjects:
+  - kind: ServiceAccount
+    name: audit-logger
+    namespace: audit-logging
+
+---
+# Deployment for Audit Logger
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-logger
+  namespace: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: audit-logging
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: audit-logging
+    spec:
+      serviceAccountName: audit-logger
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      
+      containers:
+        - name: audit-logger
+          image: fluent/fluent-bit:2.1.0
+          imagePullPolicy: IfNotPresent
+          
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc
+              readOnly: true
+            - name: audit-logs
+              mountPath: /var/log/audit
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-config
+        - name: audit-logs
+          hostPath:
+            path: /var/log/audit
+            type: DirectoryOrCreate
+        - name: tmp
+          emptyDir: {}
+
+---
+# ConfigMap for Fluent Bit Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush        5
+        Daemon       Off
+        Log_Level    info
+        Parsers_File parsers.conf
+    
+    [INPUT]
+        Name              tail
+        Path              /var/log/audit/audit.log
+        Parser            json
+        Tag               audit.*
+        Refresh_Interval  5
+        Mem_Buf_Limit     50MB
+        Skip_Long_Lines   On
+    
+    [FILTER]
+        Name                kubernetes
+        Match               audit.*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     audit.
+        Merge_Log           On
+        Keep_Log            Off
+    
+    [OUTPUT]
+        Name                es
+        Match               audit.*
+        Host                elasticsearch.monitoring.svc.cluster.local
+        Port                9200
+        HTTP_User           elastic
+        HTTP_Passwd         ${ELASTIC_PASSWORD}
+        Index               audit-%Y.%m.%d
+        Type                _doc
+        Retry_Limit         5
+        Trace               Off
+    
+    [OUTPUT]
+        Name                stackdriver
+        Match               audit.*
+        google_service_credentials /var/secrets/google/key.json
+        resource            k8s_cluster
+        k8s_cluster_name    pivori-cluster
+        k8s_cluster_location us-east-1
+        tag_prefix          audit.
+  
+  parsers.conf: |
+    [PARSER]
+        Name        json
+        Format      json
+        Time_Key    timestamp
+        Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+
+---
+# Service for Audit Logger
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-logger
+  namespace: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+spec:
+  type: ClusterIP
+  ports:
+    - port: 24224
+      targetPort: 24224
+      protocol: TCP
+      name: fluent
+  selector:
+    app.kubernetes.io/name: audit-logging
+
+---
+# DaemonSet for Node Audit Collector
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-audit-collector
+  namespace: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: node-audit-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: node-audit-collector
+    spec:
+      hostNetwork: true
+      hostPID: true
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+      
+      containers:
+        - name: node-audit-collector
+          image: fluent/fluent-bit:2.1.0
+          imagePullPolicy: IfNotPresent
+          
+          securityContext:
+            privileged: true
+          
+          volumeMounts:
+            - name: audit-logs
+              mountPath: /var/log/audit
+              readOnly: true
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc
+              readOnly: true
+      
+      volumes:
+        - name: audit-logs
+          hostPath:
+            path: /var/log/audit
+            type: DirectoryOrCreate
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-config
+
+---
+# PrometheusRule for Audit Alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: audit-logging-alerts
+  namespace: audit-logging
+  labels:
+    app.kubernetes.io/name: audit-logging
+spec:
+  groups:
+    - name: audit.rules
+      interval: 30s
+      rules:
+        - alert: UnauthorizedAccessAttempt
+          expr: increase(audit_unauthorized_access_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Unauthorized access attempt detected"
+            description: "Unauthorized access attempt detected in audit logs"
+        
+        - alert: SecretAccessAnomaly
+          expr: increase(audit_secret_access_total[5m]) > 10
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Unusual secret access pattern"
+            description: "Unusual number of secret access attempts detected"
+        
+        - alert: RBACChangesDetected
+          expr: increase(audit_rbac_changes_total[1h]) > 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "RBAC changes detected"
+            description: "Multiple RBAC changes detected in audit logs"
+        
+        - alert: AuditLogWriteFailure
+          expr: increase(audit_write_failures_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Audit log write failure"
+            description: "Failed to write audit logs. Check disk space and permissions."
+
+---
+# NetworkPolicy for Audit Logging
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: audit-logging-network-policy
+  namespace: audit-logging
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: audit-logging
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 24224
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9200
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+---
+# Example: Audit Event Query (Elasticsearch)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audit-queries
+  namespace: audit-logging
+data:
+  queries.json: |
+    {
+      "queries": [
+        {
+          "name": "Unauthorized Access Attempts",
+          "query": {
+            "bool": {
+              "must": [
+                { "term": { "status.code": 401 } },
+                { "term": { "verb": "get" } }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Secret Access",
+          "query": {
+            "bool": {
+              "must": [
+                { "term": { "objectRef.resource": "secrets" } }
+              ]
+            }
+          }
+        },
+        {
+          "name": "RBAC Changes",
+          "query": {
+            "bool": {
+              "must": [
+                { "terms": { "objectRef.resource": ["roles", "rolebindings", "clusterroles", "clusterrolebindings"] } },
+                { "terms": { "verb": ["create", "update", "patch", "delete"] } }
+              ]
+            }
+          }
+        }
+      ]
+    }
+
