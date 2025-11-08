@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pivori-services
+  namespace: pivori-production
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pivori-services-role
+  namespace: pivori-production
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pivori-services-rolebinding
+  namespace: pivori-production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pivori-services-role
+subjects:
+- kind: ServiceAccount
+  name: pivori-services
+  namespace: pivori-production
