@@ -1,0 +1,564 @@
+---
+# ArgoCD GitOps Setup
+# Infrastructure as Code with continuous deployment
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+
+---
+# ServiceAccount for ArgoCD
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-application-controller
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+
+---
+# ClusterRole for ArgoCD
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argocd-application-controller
+  labels:
+    app.kubernetes.io/name: argocd
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+  - nonResourceURLs: ["*"]
+    verbs: ["*"]
+
+---
+# ClusterRoleBinding for ArgoCD
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argocd-application-controller
+  labels:
+    app.kubernetes.io/name: argocd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argocd-application-controller
+subjects:
+  - kind: ServiceAccount
+    name: argocd-application-controller
+    namespace: argocd
+
+---
+# ConfigMap for ArgoCD Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+data:
+  url: https://argocd.pivori.app
+  application.instanceLabelKey: argocd.argoproj.io/instance
+  server.insecure: "false"
+  server.rootpath: "/"
+  server.basehref: "/"
+  server.staticAssets: "/shared/app"
+  
+  # Repository configuration
+  repositories: |
+    - type: git
+      url: https://github.com/pivori-app/Pivori-studio.git
+      name: pivori-studio
+      usernameSecret:
+        name: github-credentials
+        key: username
+      passwordSecret:
+        name: github-credentials
+        key: password
+  
+  # Helm repositories
+  helm.repositories: |
+    - name: stable
+      url: https://charts.helm.sh/stable
+    - name: bitnami
+      url: https://charts.bitnami.com/bitnami
+  
+  # RBAC configuration
+  rbac.default.policy: |
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, repositories, *, *, allow
+    p, role:admin, clusters, *, *, allow
+    p, role:admin, accounts, *, *, allow
+    p, role:admin, exec, create, */*, allow
+    
+    p, role:developer, applications, get, */*, allow
+    p, role:developer, applications, sync, */*, allow
+    p, role:developer, repositories, get, *, allow
+    p, role:developer, clusters, get, *, allow
+    p, role:developer, exec, create, */*, allow
+    
+    p, role:viewer, applications, get, */*, allow
+    p, role:viewer, repositories, get, *, allow
+    p, role:viewer, clusters, get, *, allow
+    
+    g, admin, role:admin
+    g, developers, role:developer
+    g, viewers, role:viewer
+
+---
+# Secret for GitHub Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-credentials
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+type: Opaque
+stringData:
+  username: github-username
+  password: github-token
+
+---
+# Deployment for ArgoCD Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-server
+    spec:
+      serviceAccountName: argocd-application-controller
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      
+      containers:
+        - name: argocd-server
+          image: argoproj/argocd:v2.8.0
+          imagePullPolicy: IfNotPresent
+          
+          command:
+            - argocd-server
+          
+          args:
+            - --repo-server=argocd-repo-server:8081
+            - --dex-server=http://argocd-dex-server:5556
+            - --logformat=json
+            - --loglevel=info
+          
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 8083
+              name: https
+          
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          
+          volumeMounts:
+            - name: ssh-known-hosts
+              mountPath: /home/argocd/.ssh
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: ssh-known-hosts
+          configMap:
+            name: argocd-ssh-known-hosts-cm
+        - name: tmp
+          emptyDir: {}
+
+---
+# Service for ArgoCD Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+    - port: 443
+      targetPort: 8083
+      protocol: TCP
+      name: https
+  selector:
+    app.kubernetes.io/name: argocd-server
+
+---
+# Ingress for ArgoCD
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd.pivori.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - argocd.pivori.app
+      secretName: argocd-tls
+
+---
+# Deployment for ArgoCD Repo Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-repo-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-repo-server
+    spec:
+      serviceAccountName: argocd-application-controller
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      
+      containers:
+        - name: argocd-repo-server
+          image: argoproj/argocd:v2.8.0
+          imagePullPolicy: IfNotPresent
+          
+          command:
+            - argocd-repo-server
+          
+          ports:
+            - containerPort: 8081
+              name: server
+          
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: ssh-known-hosts
+              mountPath: /home/argocd/.ssh
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: ssh-known-hosts
+          configMap:
+            name: argocd-ssh-known-hosts-cm
+        - name: tmp
+          emptyDir: {}
+
+---
+# Service for Repo Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-repo-server
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8081
+      targetPort: server
+      protocol: TCP
+      name: server
+  selector:
+    app.kubernetes.io/name: argocd-repo-server
+
+---
+# Deployment for ArgoCD Application Controller
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-application-controller
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-application-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-application-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-application-controller
+    spec:
+      serviceAccountName: argocd-application-controller
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      
+      containers:
+        - name: argocd-application-controller
+          image: argoproj/argocd:v2.8.0
+          imagePullPolicy: IfNotPresent
+          
+          command:
+            - argocd-application-controller
+          
+          args:
+            - --repo-server=argocd-repo-server:8081
+            - --logformat=json
+            - --loglevel=info
+          
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+
+---
+# ConfigMap for SSH Known Hosts
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-ssh-known-hosts-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+data:
+  ssh_known_hosts: |
+    github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQwcKllmDY5MZSZGo/Fc7SJvo/xNAhcg6p7ZQu4Xo42FmD+SnvlO7Yv4Qbf1Su+Km9LsEZBJF85z/RKE=
+
+---
+# Example: ArgoCD Application for Pivori Production
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pivori-production
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: pivori
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/pivori-app/Pivori-studio.git
+    targetRevision: main
+    path: kubernetes/
+    
+    helm:
+      releaseName: pivori
+      values: |
+        replicaCount: 3
+        image:
+          tag: latest
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pivori-production
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# Example: ArgoCD Application for Monitoring
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: monitoring
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/pivori-app/Pivori-studio.git
+    targetRevision: main
+    path: kubernetes/monitoring/
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+---
+# PrometheusRule for ArgoCD Alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-alerts
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+spec:
+  groups:
+    - name: argocd.rules
+      interval: 30s
+      rules:
+        - alert: ArgocdAppSyncFailed
+          expr: argocd_app_sync_total{phase="Failed"} > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD app sync failed"
+            description: "ArgoCD application {{ $labels.name }} sync failed"
+        
+        - alert: ArgocdAppOutOfSync
+          expr: argocd_app_info{sync_status="OutOfSync"} > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD app out of sync"
+            description: "ArgoCD application {{ $labels.name }} is out of sync"
+
+---
+# NetworkPolicy for ArgoCD
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: argocd-network-policy
+  namespace: argocd
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8083
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+

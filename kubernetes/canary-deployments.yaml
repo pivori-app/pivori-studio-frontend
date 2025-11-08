@@ -1,0 +1,507 @@
+---
+# Canary Deployments with Flagger & Istio
+# Progressive rollout strategy with automated rollback
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger
+
+---
+# ServiceAccount for Flagger
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flagger
+  namespace: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger
+
+---
+# ClusterRole for Flagger
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flagger
+  labels:
+    app.kubernetes.io/name: flagger
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "daemonsets", "statefulsets"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["services", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.istio.io"]
+    resources: ["virtualservices", "destinationrules"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["flagger.app"]
+    resources: ["canaries"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+---
+# ClusterRoleBinding for Flagger
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flagger
+  labels:
+    app.kubernetes.io/name: flagger
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flagger
+subjects:
+  - kind: ServiceAccount
+    name: flagger
+    namespace: flagger-system
+
+---
+# Deployment for Flagger
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger
+  namespace: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flagger
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flagger
+    spec:
+      serviceAccountName: flagger
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      
+      containers:
+        - name: flagger
+          image: flagger/flagger:0.36.0
+          imagePullPolicy: IfNotPresent
+          
+          ports:
+            - containerPort: 8080
+              name: http
+          
+          command:
+            - flagger
+          
+          args:
+            - -log-level=info
+            - -istio-namespace=istio-system
+            - -metrics-server-url=http://prometheus.monitoring.svc.cluster.local:9090
+          
+          env:
+            - name: FLAGGER_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+# Service for Flagger
+apiVersion: v1
+kind: Service
+metadata:
+  name: flagger
+  namespace: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: flagger
+
+---
+# Example: Canary Deployment for Geolocation Service
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: geolocation
+  namespace: pivori-production
+  labels:
+    app.kubernetes.io/name: geolocation
+spec:
+  # Reference to deployment
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: geolocation
+  
+  # Service name
+  service:
+    name: geolocation
+    port: 8010
+  
+  # Analysis interval
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    stepWeightPromotion: 50
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+      - name: request-duration
+        thresholdRange:
+          max: 500
+        interval: 1m
+      - name: error-rate
+        thresholdRange:
+          max: 5
+        interval: 1m
+    webhooks:
+      - name: acceptance-test
+        url: http://flagger-loadtester/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://geolocation-canary:8010/api/geolocation/health | grep ok"
+      - name: load-test
+        url: http://flagger-loadtester/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 1m -q 10 -c 2 http://geolocation-canary:8010/api/geolocation/health"
+  
+  # Istio traffic policy
+  skipAnalysis: false
+  
+  # Progressive traffic shift
+  progressDeadlineSeconds: 600
+
+---
+# VirtualService for Canary
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: geolocation
+  namespace: pivori-production
+  labels:
+    app.kubernetes.io/name: geolocation
+spec:
+  hosts:
+    - geolocation
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: geolocation
+            port:
+              number: 8010
+          weight: 100
+
+---
+# DestinationRule for Canary
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: geolocation
+  namespace: pivori-production
+  labels:
+    app.kubernetes.io/name: geolocation
+spec:
+  host: geolocation
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minRequestVolume: 10
+      splitExternalLocalOriginErrors: true
+  subsets:
+    - name: primary
+      labels:
+        version: primary
+    - name: canary
+      labels:
+        version: canary
+
+---
+# Flagger LoadTester for Testing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger-loadtester
+  namespace: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger-loadtester
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flagger-loadtester
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flagger-loadtester
+    spec:
+      containers:
+        - name: loadtester
+          image: flagger/loadtester:0.36.0
+          imagePullPolicy: IfNotPresent
+          
+          ports:
+            - containerPort: 8080
+              name: http
+          
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+---
+# Service for LoadTester
+apiVersion: v1
+kind: Service
+metadata:
+  name: flagger-loadtester
+  namespace: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger-loadtester
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: flagger-loadtester
+
+---
+# PrometheusRule for Canary Alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flagger-alerts
+  namespace: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger
+spec:
+  groups:
+    - name: flagger.rules
+      interval: 30s
+      rules:
+        - alert: CanaryAnalysisFailed
+          expr: increase(flagger_canary_status_failed_total[5m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Canary analysis failed"
+            description: "Canary deployment analysis failed for {{ $labels.canary }}"
+        
+        - alert: CanaryRollbackTriggered
+          expr: increase(flagger_canary_status_rollback_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Canary rollback triggered"
+            description: "Canary deployment was rolled back for {{ $labels.canary }}"
+        
+        - alert: CanarySucceeded
+          expr: increase(flagger_canary_status_succeeded_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: info
+          annotations:
+            summary: "Canary deployment succeeded"
+            description: "Canary deployment succeeded for {{ $labels.canary }}"
+
+---
+# NetworkPolicy for Flagger
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: flagger-network-policy
+  namespace: flagger-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: flagger
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+
+---
+# Example: Canary Deployment for All Services
+# Template for each service
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: routing
+  namespace: pivori-production
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: routing
+  service:
+    name: routing
+    port: 8020
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+      - name: request-duration
+        thresholdRange:
+          max: 500
+        interval: 1m
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 1m -q 10 -c 2 http://routing-canary:8020/health"
+
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: proximity
+  namespace: pivori-production
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: proximity
+  service:
+    name: proximity
+    port: 8030
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+      - name: request-duration
+        thresholdRange:
+          max: 500
+        interval: 1m
+    webhooks:
+      - name: load-test
+        url: http://flagger-loadtester/
+        timeout: 5s
+        metadata:
+          type: cmd
+          cmd: "hey -z 1m -q 10 -c 2 http://proximity-canary:8030/health"
+
+---
+# ServiceMonitor for Flagger Metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flagger
+  namespace: flagger-system
+  labels:
+    app.kubernetes.io/name: flagger
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flagger
+  endpoints:
+    - port: http
+      interval: 30s
+
