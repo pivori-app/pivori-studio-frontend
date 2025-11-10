@@ -63,6 +63,22 @@ export default function Navigation() {
             </li>
             <li>
               <Link 
+                to="/analytics" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
+              >
+                Analytics
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/payments" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
+              >
+                Paiements
+              </Link>
+            </li>
+            <li>
+              <Link 
                 to="/services" 
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
               >
@@ -142,6 +158,24 @@ export default function Navigation() {
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 block py-2"
               >
                 Connaissances
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/analytics" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 block py-2"
+              >
+                Analytics
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/payments" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 block py-2"
+              >
+                Paiements
               </Link>
             </li>
             <li>

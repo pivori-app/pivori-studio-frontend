@@ -6,6 +6,8 @@ import Services from './pages/Services'
 import Settings from './pages/Settings'
 import Connecteurs from './pages/Connecteurs'
 import Connaissances from './pages/Connaissances'
+import AnalyticsDashboard from './pages/AnalyticsDashboard'
+import PaymentHub from './pages/PaymentHub'
 import Navigation from './components/Navigation'
 import ErrorBoundary from './components/ErrorBoundary'
 import { useServiceWorker } from './hooks/useServiceWorker'
@@ -28,6 +30,8 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/connecteurs" element={<Connecteurs />} />
               <Route path="/connaissances" element={<Connaissances />} />
+              <Route path="/analytics" element={<AnalyticsDashboard />} />
+              <Route path="/payments" element={<PaymentHub />} />
             </Routes>
           </main>
         </div>
