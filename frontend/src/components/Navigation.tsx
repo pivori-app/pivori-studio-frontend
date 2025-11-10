@@ -47,6 +47,22 @@ export default function Navigation() {
             </li>
             <li>
               <Link 
+                to="/connecteurs" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
+              >
+                Connecteurs
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/connaissances" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
+              >
+                Connaissances
+              </Link>
+            </li>
+            <li>
+              <Link 
                 to="/services" 
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
               >
@@ -108,6 +124,24 @@ export default function Navigation() {
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 block py-2"
               >
                 Applications
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/connecteurs" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 block py-2"
+              >
+                Connecteurs
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/connaissances" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 block py-2"
+              >
+                Connaissances
               </Link>
             </li>
             <li>

@@ -4,6 +4,8 @@ import Applications from './pages/Applications'
 import NewApplication from './pages/NewApplication'
 import Services from './pages/Services'
 import Settings from './pages/Settings'
+import Connecteurs from './pages/Connecteurs'
+import Connaissances from './pages/Connaissances'
 import Navigation from './components/Navigation'
 import ErrorBoundary from './components/ErrorBoundary'
 import { useServiceWorker } from './hooks/useServiceWorker'
@@ -24,6 +26,8 @@ function App() {
               <Route path="/applications/new" element={<NewApplication />} />
               <Route path="/services" element={<Services />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/connecteurs" element={<Connecteurs />} />
+              <Route path="/connaissances" element={<Connaissances />} />
             </Routes>
           </main>
         </div>
