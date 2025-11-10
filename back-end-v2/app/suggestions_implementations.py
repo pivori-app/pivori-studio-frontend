@@ -1,9 +1,9 @@
 # ============================================================================
-# Rubi Studio - Implémentations des 10 Suggestions Avancées
+# PIVORI Studio - Implémentations des 10 Suggestions Avancées
 # ============================================================================
 # Version: 5.0.0
 # Date: 23 Octobre 2025
-# Purpose: Implémentation des 10 suggestions avancées pour Rubi Studio
+# Purpose: Implémentation des 10 suggestions avancées pour PIVORI Studio
 # ============================================================================
 
 from fastapi import APIRouter, HTTPException, Depends, Query

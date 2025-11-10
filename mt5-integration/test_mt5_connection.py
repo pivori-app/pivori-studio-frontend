@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Rubi Studio - MT5 Connection Test Script
+PIVORI Studio - MT5 Connection Test Script
 Version: 3.0.0
 Purpose: Simple test to verify MT5 ↔ Backend connection
 
@@ -297,7 +297,7 @@ def test_disconnect(session_id: str) -> bool:
 
 def main():
     """Main test function."""
-    print_header("🤖 Rubi Studio - MT5 Connection Test")
+    print_header("🤖 PIVORI Studio - MT5 Connection Test")
     
     print(f"{Colors.BOLD}Configuration:{Colors.ENDC}")
     print(f"  Backend URL: {API_BASE_URL}")

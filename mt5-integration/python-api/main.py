@@ -1,5 +1,5 @@
 """
-Rubi Studio - MT5 Trading API
+PIVORI Studio - MT5 Trading API
 FastAPI backend pour recevoir et gérer les signaux de trading MT5
 Version: 3.0.0
 """
@@ -175,7 +175,7 @@ account_info: Dict[str, Dict[str, Any]] = {}
 # ============================================================================
 
 app = FastAPI(
-    title="Rubi Studio MT5 Trading API",
+    title="PIVORI Studio MT5 Trading API",
     description="API Backend pour recevoir et gérer les signaux de trading MT5",
     version="3.0.0",
     docs_url="/docs",
@@ -664,7 +664,7 @@ async def startup_event():
     """
     Événement de démarrage
     """
-    logger.info("🚀 Rubi Studio MT5 Trading API started")
+    logger.info("🚀 PIVORI Studio MT5 Trading API started")
     logger.info("📡 Listening for MT5 signals...")
     logger.info("✅ Simple Trading API routes loaded")
     logger.info("📚 Documentation available at /docs")
@@ -675,7 +675,7 @@ async def shutdown_event():
     """
     Événement d'arrêt
     """
-    logger.info("🛑 Rubi Studio MT5 Trading API stopped")
+    logger.info("🛑 PIVORI Studio MT5 Trading API stopped")
 
 # ============================================================================
 # MAIN

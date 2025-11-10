@@ -1,5 +1,5 @@
 """
-Validators pour Rubi Studio
+Validators pour PIVORI Studio
 Validation des variables contre les schémas JSON
 """
 

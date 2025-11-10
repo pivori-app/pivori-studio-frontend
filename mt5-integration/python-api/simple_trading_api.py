@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Rubi Studio - Simple Trading API
+PIVORI Studio - Simple Trading API
 Version: 3.0.0
 Purpose: Simple API routes for MT5 trading signals
 

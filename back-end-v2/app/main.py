@@ -1,5 +1,5 @@
 """
-Rubi Studio Backend API - Version 2.0
+PIVORI Studio Backend API - Version 2.0
 Backend FastAPI amélioré avec corrections critiques
 """
 
@@ -72,7 +72,7 @@ active_executions = Gauge(
 
 # Application FastAPI
 app = FastAPI(
-    title="Rubi Studio API",
+    title="PIVORI Studio API",
     description="API Backend pour la plateforme de Prompt Engineering",
     version="2.0.0"
 )
@@ -480,7 +480,7 @@ def health_check():
 def read_root():
     """Point d'entrée de l'API"""
     return {
-        "message": "Bienvenue sur l'API Rubi Studio",
+        "message": "Bienvenue sur l'API PIVORI Studio",
         "version": "2.0.0",
         "documentation": "/docs",
         "health": "/health",

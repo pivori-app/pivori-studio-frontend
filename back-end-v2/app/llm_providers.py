@@ -1,5 +1,5 @@
 """
-Abstraction des fournisseurs LLM pour Rubi Studio
+Abstraction des fournisseurs LLM pour PIVORI Studio
 Support pour OpenAI, Gemini, Claude
 """
 

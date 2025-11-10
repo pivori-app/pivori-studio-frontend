@@ -1,2 +1,2 @@
-# Rubi Studio Backend API Package
+# PIVORI Studio Backend API Package
 
