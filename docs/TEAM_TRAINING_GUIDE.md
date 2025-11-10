@@ -316,7 +316,7 @@ kubectl scale deployment --all --replicas=0 -n pivori-production
 bash scripts/backup/backup-scripts-expert.sh restore_complete /backups/pivori-studio-complete-*.zip
 
 # 3. Vérifier la structure
-ls -la /home/ubuntu/rubi-studio/
+ls -la /home/ubuntu/pivori-studio/
 
 # 4. Redémarrer les services
 kubectl scale deployment --all --replicas=1 -n pivori-production

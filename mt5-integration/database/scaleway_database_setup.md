@@ -1,4 +1,4 @@
-# Configuration Base de Données PostgreSQL sur Scaleway pour Rubi Studio Trading
+# Configuration Base de Données PostgreSQL sur Scaleway pour PIVORI Studio Trading
 
 **Date :** 23 Octobre 2025  
 **Version :** 3.0.0  
@@ -131,8 +131,8 @@
 ```hcl
 # scaleway_infrastructure/terraform/database.tf
 
-resource "scaleway_rdb_instance" "rubi_studio_trading_db" {
-  name              = "rubi-studio-trading-db"
+resource "scaleway_rdb_instance" "pivori_studio_trading_db" {
+  name              = "pivori-studio-trading-db"
   node_type         = "DB-GP-M"
   engine            = "PostgreSQL-15"
   is_ha_cluster     = true
@@ -140,24 +140,24 @@ resource "scaleway_rdb_instance" "rubi_studio_trading_db" {
   backup_schedule_frequency = 24  # Backup quotidien
   backup_schedule_retention = 7   # Rétention 7 jours
   
-  user_name = "rubi_admin"
+  user_name = "pivori_admin"
   password  = var.db_password
   
-  tags = ["rubi-studio", "trading", "production"]
+  tags = ["pivori-studio", "trading", "production"]
 }
 
 resource "scaleway_rdb_database" "trading_db" {
-  instance_id = scaleway_rdb_instance.rubi_studio_trading_db.id
-  name        = "rubi_trading"
+  instance_id = scaleway_rdb_instance.pivori_studio_trading_db.id
+  name        = "pivori_trading"
 }
 
 # Outputs
 output "database_endpoint" {
-  value = scaleway_rdb_instance.rubi_studio_trading_db.endpoint_ip
+  value = scaleway_rdb_instance.pivori_studio_trading_db.endpoint_ip
 }
 
 output "database_port" {
-  value = scaleway_rdb_instance.rubi_studio_trading_db.endpoint_port
+  value = scaleway_rdb_instance.pivori_studio_trading_db.endpoint_port
 }
 ```
 
@@ -499,7 +499,7 @@ WHERE s.is_active = TRUE;
 -- Créer un utilisateur admin par défaut (mot de passe: admin123)
 INSERT INTO users (email, username, hashed_password, is_superuser)
 VALUES (
-    'admin@rubi-studio.com',
+    'admin@pivori-studio.com',
     'admin',
     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqJhKwHim.',  -- bcrypt hash de "admin123"
     TRUE
@@ -510,26 +510,26 @@ VALUES (
 -- ============================================================================
 
 -- Créer un utilisateur applicatif
-CREATE USER rubi_app WITH PASSWORD 'CHANGE_ME_IN_PRODUCTION';
+CREATE USER pivori_app WITH PASSWORD 'CHANGE_ME_IN_PRODUCTION';
 
 -- Accorder les permissions
-GRANT CONNECT ON DATABASE rubi_trading TO rubi_app;
-GRANT USAGE ON SCHEMA public TO rubi_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rubi_app;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO rubi_app;
+GRANT CONNECT ON DATABASE pivori_trading TO pivori_app;
+GRANT USAGE ON SCHEMA public TO pivori_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO pivori_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO pivori_app;
 
 -- Permissions par défaut pour les nouvelles tables
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO rubi_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO pivori_app;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
-    GRANT USAGE, SELECT ON SEQUENCES TO rubi_app;
+    GRANT USAGE, SELECT ON SEQUENCES TO pivori_app;
 
 -- ============================================================================
 -- COMMENTAIRES
 -- ============================================================================
 
-COMMENT ON TABLE users IS 'Utilisateurs de la plateforme Rubi Studio';
+COMMENT ON TABLE users IS 'Utilisateurs de la plateforme PIVORI Studio';
 COMMENT ON TABLE trading_strategies IS 'Stratégies de trading configurées par les utilisateurs';
 COMMENT ON TABLE mt5_sessions IS 'Sessions de connexion MT5 actives et historiques';
 COMMENT ON TABLE trading_signals IS 'Signaux de trading reçus depuis MT5 ou générés par les stratégies';
@@ -551,7 +551,7 @@ COMMENT ON TABLE performance_metrics IS 'Métriques de performance calculées p�
 ### 📄 Fichier : `postgresql.conf` (optimisations)
 
 ```ini
-# Rubi Studio Trading Database Configuration
+# PIVORI Studio Trading Database Configuration
 # PostgreSQL 15
 
 # ============================================================================
@@ -674,28 +674,28 @@ CREATE INDEX idx_strategies_symbols_gin ON trading_strategies USING GIN (symbols
 #!/bin/bash
 # backup_database.sh
 
-DB_NAME="rubi_trading"
-DB_USER="rubi_admin"
+DB_NAME="pivori_trading"
+DB_USER="pivori_admin"
 DB_HOST="your-db-endpoint.scw.cloud"
 BACKUP_DIR="/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 # Backup complet
-pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME -F c -f $BACKUP_DIR/rubi_trading_$DATE.dump
+pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME -F c -f $BACKUP_DIR/pivori_trading_$DATE.dump
 
 # Backup SQL
-pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME -F p -f $BACKUP_DIR/rubi_trading_$DATE.sql
+pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME -F p -f $BACKUP_DIR/pivori_trading_$DATE.sql
 
 # Compresser
-gzip $BACKUP_DIR/rubi_trading_$DATE.sql
+gzip $BACKUP_DIR/pivori_trading_$DATE.sql
 
 # Uploader vers S3
-aws s3 cp $BACKUP_DIR/rubi_trading_$DATE.dump s3://rubi-studio-backups/database/
-aws s3 cp $BACKUP_DIR/rubi_trading_$DATE.sql.gz s3://rubi-studio-backups/database/
+aws s3 cp $BACKUP_DIR/pivori_trading_$DATE.dump s3://pivori-studio-backups/database/
+aws s3 cp $BACKUP_DIR/pivori_trading_$DATE.sql.gz s3://pivori-studio-backups/database/
 
 # Nettoyer les backups locaux > 3 jours
-find $BACKUP_DIR -name "rubi_trading_*.dump" -mtime +3 -delete
-find $BACKUP_DIR -name "rubi_trading_*.sql.gz" -mtime +3 -delete
+find $BACKUP_DIR -name "pivori_trading_*.dump" -mtime +3 -delete
+find $BACKUP_DIR -name "pivori_trading_*.sql.gz" -mtime +3 -delete
 
 echo "Backup completed: $DATE"
 ```
@@ -718,7 +718,7 @@ SELECT
     pg_database.datname,
     pg_size_pretty(pg_database_size(pg_database.datname)) AS size
 FROM pg_database
-WHERE datname = 'rubi_trading';
+WHERE datname = 'pivori_trading';
 
 -- Taille des tables
 SELECT 
@@ -749,7 +749,7 @@ SELECT
     state,
     query
 FROM pg_stat_activity
-WHERE datname = 'rubi_trading';
+WHERE datname = 'pivori_trading';
 
 -- Index non utilisés
 SELECT 
@@ -780,12 +780,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration
-SQLITE_DB = "rubi_studio.db"
+SQLITE_DB = "pivori_studio.db"
 POSTGRES_CONFIG = {
     "host": "your-db-endpoint.scw.cloud",
     "port": 5432,
-    "database": "rubi_trading",
-    "user": "rubi_admin",
+    "database": "pivori_trading",
+    "user": "pivori_admin",
     "password": "YOUR_PASSWORD"
 }
 
@@ -863,13 +863,13 @@ if __name__ == "__main__":
 
 set -e
 
-echo "🚀 Installation de la base de données Rubi Studio Trading..."
+echo "🚀 Installation de la base de données PIVORI Studio Trading..."
 
 # Variables
 DB_HOST="your-db-endpoint.scw.cloud"
 DB_PORT=5432
-DB_NAME="rubi_trading"
-DB_USER="rubi_admin"
+DB_NAME="pivori_trading"
+DB_USER="pivori_admin"
 DB_PASSWORD="$1"
 
 if [ -z "$DB_PASSWORD" ]; then

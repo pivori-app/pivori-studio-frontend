@@ -1,4 +1,4 @@
-# 🤖 Rubi Studio - Intégration MT5 Trading
+# 🤖 PIVORI Studio - Intégration MT5 Trading
 
 **Version :** 3.0.0  
 **Date :** 23 Octobre 2025  
@@ -23,7 +23,7 @@
 
 ## 🎯 Vue d'Ensemble
 
-Cette intégration permet à Rubi Studio de recevoir et gérer les signaux de trading depuis MetaTrader 5 (MT5) en temps réel.
+Cette intégration permet à PIVORI Studio de recevoir et gérer les signaux de trading depuis MetaTrader 5 (MT5) en temps réel.
 
 ### ✨ Fonctionnalités
 
@@ -49,7 +49,7 @@ Cette intégration permet à Rubi Studio de recevoir et gérer les signaux de tr
 
 MT5 Terminal (Windows/Wine)
          │
-         │ MQL5 Script (RubiStudioConnector.mq5)
+         │ MQL5 Script (PIVORIStudioConnector.mq5)
          │ - Monitoring positions
          │ - Envoi signaux HTTP
          │ - Réception ordres
@@ -108,8 +108,8 @@ MT5 Terminal (Windows/Wine)
 ### 1. Cloner le Repository
 
 ```bash
-git clone https://github.com/pivori-app/rubi-studio.git
-cd rubi-studio/mt5-integration
+git clone https://github.com/pivori-app/pivori-studio.git
+cd pivori-studio/mt5-integration
 ```
 
 ### 2. Installer les Dépendances Python
@@ -135,13 +135,13 @@ sudo apt-get install postgresql-15 postgresql-contrib
 
 # Créer la base de données
 sudo -u postgres psql
-CREATE DATABASE rubi_trading;
-CREATE USER rubi_admin WITH PASSWORD 'YOUR_PASSWORD';
-GRANT ALL PRIVILEGES ON DATABASE rubi_trading TO rubi_admin;
+CREATE DATABASE pivori_trading;
+CREATE USER pivori_admin WITH PASSWORD 'YOUR_PASSWORD';
+GRANT ALL PRIVILEGES ON DATABASE pivori_trading TO pivori_admin;
 \q
 
 # Exécuter le schéma
-psql -U rubi_admin -d rubi_trading -f schema.sql
+psql -U pivori_admin -d pivori_trading -f schema.sql
 ```
 
 ### 4. Installer MT5 Connector
@@ -149,7 +149,7 @@ psql -U rubi_admin -d rubi_trading -f schema.sql
 #### Sur Windows
 
 1. Télécharger et installer MT5
-2. Copier `mql5/RubiStudioConnector.mq5` dans `C:\Program Files\MetaTrader 5\MQL5\Experts\`
+2. Copier `mql5/PIVORIStudioConnector.mq5` dans `C:\Program Files\MetaTrader 5\MQL5\Experts\`
 3. Compiler le script dans MetaEditor
 4. Attacher l'Expert Advisor à un graphique
 
@@ -166,7 +166,7 @@ wget https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe
 wine mt5setup.exe
 
 # Copier le script
-cp mql5/RubiStudioConnector.mq5 ~/.wine/drive_c/Program\ Files/MetaTrader\ 5/MQL5/Experts/
+cp mql5/PIVORIStudioConnector.mq5 ~/.wine/drive_c/Program\ Files/MetaTrader\ 5/MQL5/Experts/
 ```
 
 ---
@@ -179,7 +179,7 @@ Créer un fichier `.env` dans `python-api/` :
 
 ```bash
 # Database
-DATABASE_URL=postgresql://rubi_admin:YOUR_PASSWORD@localhost:5432/rubi_trading
+DATABASE_URL=postgresql://pivori_admin:YOUR_PASSWORD@localhost:5432/pivori_trading
 
 # Redis
 REDIS_URL=redis://localhost:6379/0
@@ -195,7 +195,7 @@ JWT_ALGORITHM=HS256
 JWT_EXPIRATION=3600
 
 # CORS
-CORS_ORIGINS=["http://localhost:3000", "https://app.rubi-studio.com"]
+CORS_ORIGINS=["http://localhost:3000", "https://app.pivori-studio.com"]
 
 # Logging
 LOG_LEVEL=INFO
@@ -209,7 +209,7 @@ PROMETHEUS_PORT=9090
 
 Dans MT5, configurer l'Expert Advisor :
 
-- **BackendURL** : `https://api.rubi-studio.com` (ou `http://localhost:8000` pour dev)
+- **BackendURL** : `https://api.pivori-studio.com` (ou `http://localhost:8000` pour dev)
 - **APIToken** : Votre token API (généré depuis le backend)
 - **CheckInterval** : 5000 (ms)
 - **EnableAutoTrading** : true
@@ -221,7 +221,7 @@ Dans MT5, configurer l'Expert Advisor :
 1. Ouvrir MT5
 2. Aller dans `Tools` → `Options` → `Expert Advisors`
 3. Cocher `Allow WebRequest for listed URL`
-4. Ajouter : `https://api.rubi-studio.com` (ou votre URL)
+4. Ajouter : `https://api.pivori-studio.com` (ou votre URL)
 
 ---
 
@@ -275,7 +275,7 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 
 1. Ouvrir MT5
 2. Ouvrir un graphique (ex: EURUSD H1)
-3. Glisser-déposer `RubiStudioConnector` sur le graphique
+3. Glisser-déposer `PIVORIStudioConnector` sur le graphique
 4. Configurer les paramètres
 5. Cliquer sur `OK`
 
@@ -493,8 +493,8 @@ cd ../../mt5-integration/database
 # 3. Déployer l'API
 cd ../python-api
 # Configurer .env avec les credentials Scaleway
-docker build -t rubi-studio-api .
-docker push registry.scaleway.com/rubi-studio/api:latest
+docker build -t pivori-studio-api .
+docker push registry.scaleway.com/pivori-studio/api:latest
 
 # 4. Déployer sur Kubernetes
 kubectl apply -f k8s/
@@ -521,10 +521,10 @@ curl http://localhost:8000/metrics
 
 ```bash
 # Logs structurés JSON
-tail -f logs/rubi-studio.log | jq .
+tail -f logs/pivori-studio.log | jq .
 
 # Rechercher des erreurs
-grep "ERROR" logs/rubi-studio.log | jq .
+grep "ERROR" logs/pivori-studio.log | jq .
 ```
 
 ---
@@ -542,7 +542,7 @@ grep "ERROR" logs/rubi-studio.log | jq .
 
 **Solution :**
 1. Vérifier que l'EA est actif (sourire vert dans le coin supérieur droit)
-2. Vérifier les logs backend : `tail -f logs/rubi-studio.log`
+2. Vérifier les logs backend : `tail -f logs/pivori-studio.log`
 3. Tester manuellement avec curl
 
 ### Problème : Ordres non exécutés
@@ -557,15 +557,15 @@ grep "ERROR" logs/rubi-studio.log | jq .
 
 ## 📞 Support
 
-- **Email :** support@rubi-studio.com
-- **Documentation :** https://docs.rubi-studio.com
-- **GitHub Issues :** https://github.com/pivori-app/rubi-studio/issues
+- **Email :** support@pivori-studio.com
+- **Documentation :** https://docs.pivori-studio.com
+- **GitHub Issues :** https://github.com/pivori-app/pivori-studio/issues
 
 ---
 
 ## 📄 Licence
 
-Copyright © 2025 Rubi Studio. Tous droits réservés.
+Copyright © 2025 PIVORI Studio. Tous droits réservés.
 
 ---
 

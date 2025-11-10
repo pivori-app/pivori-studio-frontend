@@ -94,9 +94,9 @@ kubectl get secret -n kube-system sealed-secrets-key -o yaml
 kubectl create secret generic db-credentials \
   --from-literal=username=postgres \
   --from-literal=password=YOUR_PASSWORD \
-  --from-literal=host=postgresql.rubi-studio.svc.cluster.local \
+  --from-literal=host=postgresql.pivori-studio.svc.cluster.local \
   --from-literal=port=5432 \
-  --from-literal=database=rubi_studio \
+  --from-literal=database=pivori_studio \
   --dry-run=client -o yaml > db-secret.yaml
 
 # Sceller le secret
@@ -113,7 +113,7 @@ rm db-secret.yaml
 ```bash
 kubectl create secret generic redis-credentials \
   --from-literal=password=YOUR_REDIS_PASSWORD \
-  --from-literal=host=redis.rubi-studio.svc.cluster.local \
+  --from-literal=host=redis.pivori-studio.svc.cluster.local \
   --from-literal=port=6379 \
   --dry-run=client -o yaml | kubeseal -f - -w redis-secret-sealed.yaml
 
@@ -284,7 +284,7 @@ Risque de propagation d'attaques
 
 ```bash
 # 1.1 Documenter les communications actuelles
-kubectl logs -n rubi-studio -l app=geolocation --tail=100 | grep -i "connecting\|request"
+kubectl logs -n pivori-studio -l app=geolocation --tail=100 | grep -i "connecting\|request"
 
 # 1.2 Analyser les connexions réseau
 kubectl exec -it geolocation-pod -- netstat -an
@@ -315,7 +315,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-all
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -337,7 +337,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-dns
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -369,7 +369,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-inter-service
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -386,7 +386,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-inter-service
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -413,7 +413,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-postgresql
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector:
     matchLabels:
@@ -424,7 +424,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: rubi-studio
+          name: pivori-studio
     ports:
     - protocol: TCP
       port: 5432
@@ -434,7 +434,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-redis
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector:
     matchLabels:
@@ -445,7 +445,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: rubi-studio
+          name: pivori-studio
     ports:
     - protocol: TCP
       port: 6379
@@ -468,7 +468,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-prometheus
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -499,7 +499,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-external-apis
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector:
     matchLabels:
@@ -538,7 +538,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-all
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -551,7 +551,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-dns
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -571,7 +571,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-inter-service
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -596,7 +596,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-database
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -623,7 +623,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-monitoring
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -643,7 +643,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-external-apis
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector:
     matchLabels:
@@ -724,7 +724,7 @@ jobs:
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ghcr.io/rubi-studio/${{ matrix.service }}:${{ github.sha }}
+        image-ref: ghcr.io/pivori-studio/${{ matrix.service }}:${{ github.sha }}
         format: 'sarif'
         output: 'trivy-results-${{ matrix.service }}.sarif'
     
@@ -737,14 +737,14 @@ jobs:
       run: |
         trivy image --severity CRITICAL,HIGH \
           --exit-code 1 \
-          ghcr.io/rubi-studio/${{ matrix.service }}:${{ github.sha }}
+          ghcr.io/pivori-studio/${{ matrix.service }}:${{ github.sha }}
     
     - name: Generate vulnerability report
       if: always()
       run: |
         trivy image --severity CRITICAL,HIGH,MEDIUM \
           --format json \
-          ghcr.io/rubi-studio/${{ matrix.service }}:${{ github.sha }} \
+          ghcr.io/pivori-studio/${{ matrix.service }}:${{ github.sha }} \
           > trivy-report-${{ matrix.service }}.json
     
     - name: Upload vulnerability report
@@ -770,7 +770,7 @@ trivy version
 trivy image --download-db-only
 
 # 2.4 Scanner une image localement
-trivy image ghcr.io/rubi-studio/geolocation:latest
+trivy image ghcr.io/pivori-studio/geolocation:latest
 ```
 
 #### Étape 3: Politique de Sécurité (4 heures)
@@ -815,7 +815,7 @@ for service in "${SERVICES[@]}"; do
   trivy image \
     --format json \
     --output scan-reports/$service.json \
-    ghcr.io/rubi-studio/$service:latest
+    ghcr.io/pivori-studio/$service:latest
 done
 
 echo "Scan complete! Reports in scan-reports/"
@@ -1089,7 +1089,7 @@ nslookup kubernetes.default
 curl http://geolocation:8000/health
 
 # Test 4: Accès DB fonctionne
-psql -h postgresql -U postgres -d rubi_studio -c "SELECT 1"
+psql -h postgresql -U postgres -d pivori_studio -c "SELECT 1"
 
 # Test 5: Accès Prometheus fonctionne
 curl http://prometheus:9090/api/v1/query
@@ -1099,10 +1099,10 @@ curl http://prometheus:9090/api/v1/query
 
 ```bash
 # Tester Trivy localement
-trivy image ghcr.io/rubi-studio/geolocation:latest
+trivy image ghcr.io/pivori-studio/geolocation:latest
 
 # Vérifier que les résultats sont dans GitHub Security
-# Aller à: https://github.com/rubi-studio/services/security/code-scanning
+# Aller à: https://github.com/pivori-studio/services/security/code-scanning
 ```
 
 ### Test 4: Audit Logging

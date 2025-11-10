@@ -265,7 +265,7 @@ variable "scaleway_project_id" {
 variable "instance_name" {
   description = "Nom de l'instance"
   type        = string
-  default     = "rubi-studio-mt5-windows"
+  default     = "pivori-studio-mt5-windows"
 }
 
 variable "instance_type" {
@@ -285,7 +285,7 @@ variable "root_volume_size_gb" {
 # ============================================================================
 
 resource "scaleway_instance_security_group" "mt5_sg" {
-  name                    = "rubi-mt5-sg"
+  name                    = "pivori-mt5-sg"
   description             = "Security group for MT5 Windows Server"
   inbound_default_policy  = "drop"
   outbound_default_policy = "accept"
@@ -356,7 +356,7 @@ resource "scaleway_instance_server" "mt5_windows" {
   
   # Tags pour organisation
   tags = [
-    "rubi-studio",
+    "pivori-studio",
     "mt5",
     "windows",
     "trading"
@@ -484,7 +484,7 @@ Restart-Service W32Time
 
 # 8. Créer un utilisateur pour MT5 (optionnel)
 Write-Log "Creating MT5 user..."
-$password = ConvertTo-SecureString "RubiStudio2025!" -AsPlainText -Force
+$password = ConvertTo-SecureString "PIVORIStudio2025!" -AsPlainText -Force
 New-LocalUser -Name "mt5user" -Password $password -Description "MetaTrader 5 User" -PasswordNeverExpires
 
 # 9. Créer un script de démarrage MT5
@@ -514,7 +514,7 @@ Write-Log "=== Windows Server 2022 Initialization Completed ==="
 Write-Log "Next steps:"
 Write-Log "1. Download and install MetaTrader 5"
 Write-Log "2. Configure MT5 with your broker"
-Write-Log "3. Deploy the RubiStudioConnector.mq5 EA"
+Write-Log "3. Deploy the PIVORIStudioConnector.mq5 EA"
 Write-Log "4. Configure the backend connection"
 ```
 
@@ -534,8 +534,8 @@ Write-Log "4. Configure the backend connection"
 
 ```bash
 # 1. Cloner le projet
-git clone https://github.com/pivori-app/rubi-studio.git
-cd rubi-studio/infrastructure/scaleway
+git clone https://github.com/pivori-app/pivori-studio.git
+cd pivori-studio/infrastructure/scaleway
 
 # 2. Créer terraform.tfvars
 cat > terraform.tfvars << EOF

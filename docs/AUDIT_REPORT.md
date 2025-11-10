@@ -108,7 +108,7 @@ apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   mtls:
     mode: STRICT
@@ -139,7 +139,7 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/rubi-studio/sa/*"]
+        principals: ["cluster.local/ns/pivori-studio/sa/*"]
 ```
 ✅ Contrôle d'accès granulaire.
 
@@ -176,7 +176,7 @@ spec:
 **3. Image Scanning**
 ```bash
 # RECOMMANDATION: Scanner les images avant déploiement
-trivy image ghcr.io/rubi-studio/geolocation:latest
+trivy image ghcr.io/pivori-studio/geolocation:latest
 ```
 
 **4. Audit Logging**
@@ -305,10 +305,10 @@ COPY --from=builder /root/.local /root/.local
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rubi-studio
+  name: pivori-studio
 spec:
   source:
-    repoURL: https://github.com/rubi-studio/services
+    repoURL: https://github.com/pivori-studio/services
     path: helm/
   destination:
     server: https://kubernetes.default.svc
@@ -332,7 +332,7 @@ spec:
   schedule: "0 2 * * *"
   template:
     includedNamespaces:
-    - rubi-studio
+    - pivori-studio
 ```
 
 ---
@@ -517,7 +517,7 @@ db_connection = get_db_connection(f"shard_{shard_id}")
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
-  name: rubi-kafka
+  name: pivori-kafka
 spec:
   kafka:
     replicas: 3
@@ -638,7 +638,7 @@ spec:
 ```bash
 # Ajouter Trivy à la pipeline CI/CD
 - name: Scan with Trivy
-  run: trivy image ghcr.io/rubi-studio/${{ matrix.service }}:${{ github.sha }}
+  run: trivy image ghcr.io/pivori-studio/${{ matrix.service }}:${{ github.sha }}
 ```
 
 ### Priorité 2 (Important - À faire dans le mois)
@@ -717,7 +717,7 @@ Week 6:
 
 ### Résumé
 
-L'architecture microservices de Rubi Studio est **bien conçue et production-ready** avec un score global de **94%**. 
+L'architecture microservices de PIVORI Studio est **bien conçue et production-ready** avec un score global de **94%**. 
 
 **Points forts:**
 - ✅ Architecture microservices exemplaire
@@ -748,9 +748,9 @@ L'architecture microservices de Rubi Studio est **bien conçue et production-rea
 ## 📞 CONTACT & SUPPORT
 
 Pour les questions ou clarifications:
-- Email: audit@rubi-studio.com
+- Email: audit@pivori-studio.com
 - Slack: #architecture-audit
-- GitHub Issues: rubi-studio/services/issues
+- GitHub Issues: pivori-studio/services/issues
 
 ---
 

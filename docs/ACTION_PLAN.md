@@ -144,7 +144,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-all
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -156,7 +156,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-dns
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -175,7 +175,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-inter-service
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector: {}
   policyTypes:
@@ -192,7 +192,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-database
-  namespace: rubi-studio
+  namespace: pivori-studio
 spec:
   podSelector:
     matchLabels:
@@ -203,7 +203,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: rubi-studio
+          name: pivori-studio
     ports:
     - protocol: TCP
       port: 5432
@@ -234,7 +234,7 @@ nslookup kubernetes.default
 curl http://geolocation:8000/health
 
 # Test 4: Vérifier l'accès à la DB
-psql -h postgresql -U postgres -d rubi_studio -c "SELECT 1"
+psql -h postgresql -U postgres -d pivori_studio -c "SELECT 1"
 ```
 
 ---
@@ -267,7 +267,7 @@ jobs:
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ghcr.io/rubi-studio/${{ matrix.service }}:${{ github.sha }}
+        image-ref: ghcr.io/pivori-studio/${{ matrix.service }}:${{ github.sha }}
         format: 'sarif'
         output: 'trivy-results.sarif'
     
@@ -279,7 +279,7 @@ jobs:
     - name: Fail if vulnerabilities found
       run: |
         trivy image --severity HIGH,CRITICAL \
-          ghcr.io/rubi-studio/${{ matrix.service }}:${{ github.sha }}
+          ghcr.io/pivori-studio/${{ matrix.service }}:${{ github.sha }}
 ```
 
 **Validation:**
@@ -315,7 +315,7 @@ CVE-2021-54321
 ```bash
 # Scanner toutes les images
 for service in geolocation routing proximity trading market-data payment iptv audio live game leaderboard reward document-scan watermark security; do
-  trivy image ghcr.io/rubi-studio/$service:latest > scan-$service.txt
+  trivy image ghcr.io/pivori-studio/$service:latest > scan-$service.txt
 done
 
 # Générer un rapport consolidé
@@ -409,7 +409,7 @@ kubectl get rolebindings -A
 kubectl get clusterrolebindings
 
 # Vérifier les permissions d'un service account
-kubectl auth can-i --list --as=system:serviceaccount:rubi-studio:geolocation
+kubectl auth can-i --list --as=system:serviceaccount:pivori-studio:geolocation
 ```
 
 #### Tâche 1.5.2: Principe du Moindre Privilège
@@ -423,7 +423,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: geolocation
-  namespace: rubi-studio
+  namespace: pivori-studio
 rules:
 # Lecture des ConfigMaps
 - apiGroups: [""]
@@ -440,7 +440,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: geolocation
-  namespace: rubi-studio
+  namespace: pivori-studio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -448,7 +448,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: geolocation
-  namespace: rubi-studio
+  namespace: pivori-studio
 ```
 
 ---
@@ -594,17 +594,17 @@ helm install argocd argo/argo-cd \
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rubi-studio
+  name: pivori-studio
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/rubi-studio/services
+    repoURL: https://github.com/pivori-studio/services
     targetRevision: main
     path: helm/
   destination:
     server: https://kubernetes.default.svc
-    namespace: rubi-studio
+    namespace: pivori-studio
   syncPolicy:
     automated:
       prune: true
@@ -645,7 +645,7 @@ spec:
   schedule: "0 2 * * *"
   template:
     includedNamespaces:
-    - rubi-studio
+    - pivori-studio
     storageLocation: aws-s3
     volumeSnapshotLocation: aws-ebs
     ttl: 720h
@@ -660,7 +660,7 @@ spec:
   schedule: "0 * * * *"
   template:
     includedNamespaces:
-    - rubi-studio
+    - pivori-studio
     storageLocation: aws-s3
     ttl: 168h
 ```
@@ -778,9 +778,9 @@ SEMAINE 6:
 
 | Rôle | Nom | Email | Téléphone |
 |------|-----|-------|-----------|
-| Project Manager | John Doe | john@rubi-studio.com | +1-555-0100 |
-| DevOps Lead | Jane Smith | jane@rubi-studio.com | +1-555-0101 |
-| Security Lead | Bob Johnson | bob@rubi-studio.com | +1-555-0102 |
+| Project Manager | John Doe | john@pivori-studio.com | +1-555-0100 |
+| DevOps Lead | Jane Smith | jane@pivori-studio.com | +1-555-0101 |
+| Security Lead | Bob Johnson | bob@pivori-studio.com | +1-555-0102 |
 
 ---
 

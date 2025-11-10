@@ -1,15 +1,15 @@
-# Rubi Studio
+# PIVORI Studio
 
 Plateforme complète de Prompt Engineering avec spécialités IA pour le développement web, le trading algorithmique, et l'automatisation.
 
 ## 🚀 Aperçu
 
-Rubi Studio est une plateforme innovante qui centralise plus de 100 spécialités de prompt engineering, permettant aux utilisateurs de créer, gérer et exécuter des prompts optimisés pour diverses applications professionnelles.
+PIVORI Studio est une plateforme innovante qui centralise plus de 100 spécialités de prompt engineering, permettant aux utilisateurs de créer, gérer et exécuter des prompts optimisés pour diverses applications professionnelles.
 
 ## 📁 Structure du Projet
 
 ```
-rubi-studio/
+pivori-studio/
 ├── back-end/           # Backend FastAPI avec gestion des prompts et LLM
 ├── front-end/          # Frontend React avec design Apple (à venir)
 ├── trading-bot/        # Robot de trading algorithmique (à venir)
@@ -79,7 +79,7 @@ pnpm dev
 
 ## 🎨 Design
 
-Le design de Rubi Studio s'inspire des Human Interface Guidelines d'Apple, offrant une expérience utilisateur élégante et intuitive avec :
+Le design de PIVORI Studio s'inspire des Human Interface Guidelines d'Apple, offrant une expérience utilisateur élégante et intuitive avec :
 - Mode Dark/Light
 - Animations fluides
 - Composants réutilisables
@@ -126,17 +126,17 @@ Les contributions sont les bienvenues ! Consultez notre guide de contribution (�
 
 ## 📄 Licence
 
-Propriétaire - Rubi Studio © 2025
+Propriétaire - PIVORI Studio © 2025
 
 ## 👥 Équipe
 
-Développé avec ❤️ par l'équipe Rubi Studio
+Développé avec ❤️ par l'équipe PIVORI Studio
 
 ## 📞 Contact
 
-- Website: https://rubi-studio.com (à venir)
-- Email: contact@rubi-studio.com
-- GitHub: https://github.com/pivori-app/rubi-studio
+- Website: https://pivori-studio.com (à venir)
+- Email: contact@pivori-studio.com
+- GitHub: https://github.com/pivori-app/pivori-studio
 
 ---
 

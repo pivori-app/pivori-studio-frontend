@@ -1,4 +1,4 @@
-# Rubi Studio Backend API - Version 2.0
+# PIVORI Studio Backend API - Version 2.0
 
 Backend FastAPI amélioré avec corrections critiques et fonctionnalités avancées.
 
@@ -55,8 +55,8 @@ Backend FastAPI amélioré avec corrections critiques et fonctionnalités avanc�
 ### 1. Cloner le repository
 
 ```bash
-git clone https://github.com/pivori-app/rubi-studio.git
-cd rubi-studio/back-end-v2
+git clone https://github.com/pivori-app/pivori-studio.git
+cd pivori-studio/back-end-v2
 ```
 
 ### 2. Créer un environnement virtuel
@@ -80,9 +80,9 @@ Créer un fichier `.env` :
 
 ```env
 # Base de données
-DATABASE_URL=postgresql://user:password@localhost:5432/rubi_studio
+DATABASE_URL=postgresql://user:password@localhost:5432/pivori_studio
 # ou pour SQLite (développement)
-# DATABASE_URL=sqlite:///./rubi_studio.db
+# DATABASE_URL=sqlite:///./pivori_studio.db
 
 # JWT
 JWT_SECRET=your-secret-key-change-in-production
@@ -292,10 +292,10 @@ Importer le dashboard Grafana depuis `grafana/dashboard.json` (à créer).
 
 ```bash
 # Créer la base de données
-createdb rubi_studio
+createdb pivori_studio
 
 # Configurer l'URL
-export DATABASE_URL=postgresql://user:password@localhost:5432/rubi_studio
+export DATABASE_URL=postgresql://user:password@localhost:5432/pivori_studio
 ```
 
 ### Redis (pour Celery)
@@ -341,7 +341,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 Vérifiez que PostgreSQL est démarré et que l'URL est correcte :
 
 ```bash
-psql -U user -d rubi_studio -h localhost
+psql -U user -d pivori_studio -h localhost
 ```
 
 ### Erreur "Could not validate credentials"
@@ -350,11 +350,11 @@ Le token JWT a expiré. Reconnectez-vous pour obtenir un nouveau token.
 
 ## 📄 Licence
 
-Propriétaire - Rubi Studio © 2025
+Propriétaire - PIVORI Studio © 2025
 
 ## 👥 Contributeurs
 
-- Équipe Rubi Studio
+- Équipe PIVORI Studio
 
 ## 📞 Support
 

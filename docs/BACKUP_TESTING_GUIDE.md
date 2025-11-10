@@ -128,7 +128,7 @@ bash scripts/backup/backup-scripts-expert.sh restore_complete /backups/backup.zi
 
 ### Test 2: Restauration Partielle
 ```bash
-unzip /backups/backup.zip "rubi-studio/services/*"
+unzip /backups/backup.zip "pivori-studio/services/*"
 ```
 
 ## 📋 CHECKLIST DE TEST

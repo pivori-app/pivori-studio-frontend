@@ -24,7 +24,7 @@
 
 ### Composants Principaux
 
-**Rubi Studio** se compose de plusieurs couches:
+**PIVORI Studio** se compose de plusieurs couches:
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -163,9 +163,9 @@
 set -e  # Arrêter à la première erreur
 
 BACKUP_DIR="/backups"
-PROJECT_DIR="/home/ubuntu/rubi-studio"
+PROJECT_DIR="/home/ubuntu/pivori-studio"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE="rubi-studio-complete-$TIMESTAMP.zip"
+BACKUP_FILE="pivori-studio-complete-$TIMESTAMP.zip"
 
 echo "🔄 Démarrage sauvegarde complète..."
 echo "📁 Répertoire: $PROJECT_DIR"
@@ -186,7 +186,7 @@ fi
 # Créer le ZIP
 echo "📦 Création du ZIP..."
 cd /home/ubuntu
-zip -r -q "$BACKUP_DIR/$BACKUP_FILE" rubi-studio/
+zip -r -q "$BACKUP_DIR/$BACKUP_FILE" pivori-studio/
 
 # Vérifier l'intégrité
 echo "✅ Vérification d'intégrité..."
@@ -215,17 +215,17 @@ echo "✅ Sauvegarde complète terminée!"
 # backup-smart.sh
 
 BACKUP_DIR="/backups"
-PROJECT_DIR="/home/ubuntu/rubi-studio"
+PROJECT_DIR="/home/ubuntu/pivori-studio"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE="rubi-studio-smart-$TIMESTAMP.zip"
+BACKUP_FILE="pivori-studio-smart-$TIMESTAMP.zip"
 
 cd /home/ubuntu
 
 # Créer ZIP en excluant .git
-zip -r -q "$BACKUP_DIR/$BACKUP_FILE" rubi-studio/ \
-    -x "rubi-studio/.git/*" \
-    -x "rubi-studio/*/logs/*" \
-    -x "rubi-studio/*/.DS_Store"
+zip -r -q "$BACKUP_DIR/$BACKUP_FILE" pivori-studio/ \
+    -x "pivori-studio/.git/*" \
+    -x "pivori-studio/*/logs/*" \
+    -x "pivori-studio/*/.DS_Store"
 
 echo "✅ Sauvegarde intelligente: $BACKUP_FILE"
 ls -lh "$BACKUP_DIR/$BACKUP_FILE"
@@ -238,9 +238,9 @@ ls -lh "$BACKUP_DIR/$BACKUP_FILE"
 # backup-compressed.sh
 
 BACKUP_DIR="/backups"
-PROJECT_DIR="/home/ubuntu/rubi-studio"
+PROJECT_DIR="/home/ubuntu/pivori-studio"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE="rubi-studio-compressed-$TIMESTAMP.7z"
+BACKUP_FILE="pivori-studio-compressed-$TIMESTAMP.7z"
 
 # Installer 7-Zip si nécessaire
 if ! command -v 7z &> /dev/null; then
@@ -268,19 +268,19 @@ fi
 ### Procédure 4: Sauvegarde Automatisée (Cron)
 
 ```bash
-# /etc/cron.d/rubi-studio-backup
+# /etc/cron.d/pivori-studio-backup
 
 # Sauvegarde complète: Dimanche à 2h du matin
-0 2 * * 0 ubuntu /home/ubuntu/scripts/backup-complete.sh >> /var/log/rubi-backup.log 2>&1
+0 2 * * 0 ubuntu /home/ubuntu/scripts/backup-complete.sh >> /var/log/pivori-backup.log 2>&1
 
 # Sauvegarde intelligente: Tous les jours à 3h du matin
-0 3 * * * ubuntu /home/ubuntu/scripts/backup-smart.sh >> /var/log/rubi-backup.log 2>&1
+0 3 * * * ubuntu /home/ubuntu/scripts/backup-smart.sh >> /var/log/pivori-backup.log 2>&1
 
 # Nettoyage des anciens backups: Tous les jours à 4h du matin
-0 4 * * * ubuntu find /backups -name "rubi-studio-*" -mtime +30 -delete
+0 4 * * * ubuntu find /backups -name "pivori-studio-*" -mtime +30 -delete
 
 # Vérification d'intégrité: Samedi à 1h du matin
-0 1 * * 6 ubuntu /home/ubuntu/scripts/verify-backups.sh >> /var/log/rubi-backup.log 2>&1
+0 1 * * 6 ubuntu /home/ubuntu/scripts/verify-backups.sh >> /var/log/pivori-backup.log 2>&1
 ```
 
 ---
@@ -318,12 +318,12 @@ fi
 
 # Arrêter les services
 echo "🛑 Arrêt des services..."
-cd "$RESTORE_DIR/rubi-studio"
+cd "$RESTORE_DIR/pivori-studio"
 docker-compose down 2>/dev/null || true
 
 # Backup de l'ancienne version
 echo "💾 Backup de l'ancienne version..."
-mv "$RESTORE_DIR/rubi-studio" "$RESTORE_DIR/rubi-studio.backup-$(date +%s)"
+mv "$RESTORE_DIR/pivori-studio" "$RESTORE_DIR/pivori-studio.backup-$(date +%s)"
 
 # Restaurer
 echo "📦 Restauration..."
@@ -332,11 +332,11 @@ unzip -q "$BACKUP_FILE"
 
 # Restaurer les permissions
 echo "🔐 Restauration des permissions..."
-chmod -R 755 "$RESTORE_DIR/rubi-studio"
+chmod -R 755 "$RESTORE_DIR/pivori-studio"
 
 # Réinstaller les dépendances
 echo "📚 Réinstallation des dépendances..."
-cd "$RESTORE_DIR/rubi-studio/services"
+cd "$RESTORE_DIR/pivori-studio/services"
 pip install -r requirements.txt 2>/dev/null || true
 npm install 2>/dev/null || true
 
@@ -357,10 +357,10 @@ BACKUP_FILE="$1"
 COMPONENTS="$2"  # "services", "frontend", "backend", etc.
 
 # Extraire seulement certains répertoires
-unzip -q "$BACKUP_FILE" "rubi-studio/$COMPONENTS/*" -d /tmp/restore
+unzip -q "$BACKUP_FILE" "pivori-studio/$COMPONENTS/*" -d /tmp/restore
 
 # Copier vers la destination
-cp -r /tmp/restore/rubi-studio/$COMPONENTS /home/ubuntu/rubi-studio/
+cp -r /tmp/restore/pivori-studio/$COMPONENTS /home/ubuntu/pivori-studio/
 
 echo "✅ Restauration partielle de: $COMPONENTS"
 ```
@@ -374,7 +374,7 @@ echo "✅ Restauration partielle de: $COMPONENTS"
 BACKUP_DATE="$1"  # Format: YYYYMMDD
 
 # Trouver le backup du jour
-BACKUP_FILE=$(ls /backups/rubi-studio-complete-$BACKUP_DATE-*.zip | head -1)
+BACKUP_FILE=$(ls /backups/pivori-studio-complete-$BACKUP_DATE-*.zip | head -1)
 
 if [ -z "$BACKUP_FILE" ]; then
     echo "❌ Pas de backup trouvé pour: $BACKUP_DATE"
@@ -444,10 +444,10 @@ echo "📋 Vérification du contenu..."
 
 # Vérifier les répertoires critiques
 CRITICAL_DIRS=(
-    "rubi-studio/services"
-    "rubi-studio/backend"
-    "rubi-studio/frontend"
-    "rubi-studio/infrastructure"
+    "pivori-studio/services"
+    "pivori-studio/backend"
+    "pivori-studio/frontend"
+    "pivori-studio/infrastructure"
 )
 
 for dir in "${CRITICAL_DIRS[@]}"; do
@@ -511,30 +511,30 @@ echo "✅ Contenu complet vérifié"
 
 ```bash
 # Chiffrer un backup
-gpg --symmetric --cipher-algo AES256 rubi-studio-complete.zip
+gpg --symmetric --cipher-algo AES256 pivori-studio-complete.zip
 
 # Déchiffrer
-gpg --output rubi-studio-complete.zip --decrypt rubi-studio-complete.zip.gpg
+gpg --output pivori-studio-complete.zip --decrypt pivori-studio-complete.zip.gpg
 ```
 
 ### Chiffrement 7-Zip
 
 ```bash
 # Créer archive chiffrée
-7z a -t7z -mhe=on -p"YourPassword" rubi-studio.7z rubi-studio/
+7z a -t7z -mhe=on -p"YourPassword" pivori-studio.7z pivori-studio/
 
 # Extraire
-7z x rubi-studio.7z
+7z x pivori-studio.7z
 ```
 
 ### Chiffrement avec OpenSSL
 
 ```bash
 # Chiffrer
-openssl enc -aes-256-cbc -salt -in rubi-studio.zip -out rubi-studio.zip.enc
+openssl enc -aes-256-cbc -salt -in pivori-studio.zip -out pivori-studio.zip.enc
 
 # Déchiffrer
-openssl enc -d -aes-256-cbc -in rubi-studio.zip.enc -out rubi-studio.zip
+openssl enc -d -aes-256-cbc -in pivori-studio.zip.enc -out pivori-studio.zip
 ```
 
 ### Bonnes Pratiques de Sécurité
@@ -642,22 +642,22 @@ curl -X POST "$WEBHOOK_URL" \
 bash /home/ubuntu/scripts/backup-complete.sh
 
 # Restauration complète
-bash /home/ubuntu/scripts/restore-complete.sh /backups/rubi-studio-complete-*.zip
+bash /home/ubuntu/scripts/restore-complete.sh /backups/pivori-studio-complete-*.zip
 
 # Vérifier l'intégrité
-bash /home/ubuntu/scripts/verify-checksum.sh /backups/rubi-studio-complete-*.zip
+bash /home/ubuntu/scripts/verify-checksum.sh /backups/pivori-studio-complete-*.zip
 
 # Lister les backups
-ls -lh /backups/rubi-studio-*
+ls -lh /backups/pivori-studio-*
 
 # Supprimer les vieux backups (>30 jours)
-find /backups -name "rubi-studio-*" -mtime +30 -delete
+find /backups -name "pivori-studio-*" -mtime +30 -delete
 
 # Compresser un backup
-7z a -t7z -mx=9 rubi-studio.7z /backups/rubi-studio-complete-*.zip
+7z a -t7z -mx=9 pivori-studio.7z /backups/pivori-studio-complete-*.zip
 
 # Chiffrer un backup
-gpg --symmetric --cipher-algo AES256 /backups/rubi-studio-complete-*.zip
+gpg --symmetric --cipher-algo AES256 /backups/pivori-studio-complete-*.zip
 ```
 
 ---
@@ -665,9 +665,9 @@ gpg --symmetric --cipher-algo AES256 /backups/rubi-studio-complete-*.zip
 ## 📞 SUPPORT & ESCALADE
 
 **Pour questions ou problèmes:**
-- Email: backup-support@rubi-studio.com
+- Email: backup-support@pivori-studio.com
 - Slack: #backup-support
-- GitHub: rubi-studio/backup/issues
+- GitHub: pivori-studio/backup/issues
 
 **Responsables:**
 - Backup Manager: [Nom]
