@@ -56,9 +56,9 @@ const PaymentHub: React.FC = () => {
 
   // Statistiques
   const stats = [
-    { label: 'Revenu Aujourd\'hui', value: hideBalance ? '••••' : '€2,100.50', icon: <DollarSign className="w-6 h-6" />, color: 'bg-green-500' },
-    { label: 'Transactions', value: hideBalance ? '••••' : '6', icon: <CreditCard className="w-6 h-6" />, color: 'bg-blue-500' },
-    { label: 'Taux de Réussite', value: hideBalance ? '••••' : '83.3%', icon: <TrendingUp className="w-6 h-6" />, color: 'bg-purple-500' },
+    { label: 'Revenu Aujourd\'hui', value: hideBalance ? '••••' : '€2,100.50', icon: <DollarSign className="w-6 h-6" />, color: 'bg-white0' },
+    { label: 'Transactions', value: hideBalance ? '••••' : '6', icon: <CreditCard className="w-6 h-6" />, color: 'bg-white0' },
+    { label: 'Taux de Réussite', value: hideBalance ? '••••' : '83.3%', icon: <TrendingUp className="w-6 h-6" />, color: 'bg-white0' },
     { label: 'En Attente', value: hideBalance ? '••••' : '€500.00', icon: <Clock className="w-6 h-6" />, color: 'bg-orange-500' },
   ];
 
@@ -94,7 +94,8 @@ const PaymentHub: React.FC = () => {
     : transactions.filter(t => t.status === filterStatus);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-7xl mx-auto p-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -292,7 +293,7 @@ const PaymentHub: React.FC = () => {
                   <div key={method.id} className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg text-white relative overflow-hidden">
                     <div className="absolute top-4 right-4 flex gap-2">
                       {method.isDefault && (
-                        <span className="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                        <span className="px-3 py-1 bg-white0 text-white text-xs font-semibold rounded-full">
                           Par défaut
                         </span>
                       )}
@@ -366,6 +367,7 @@ const PaymentHub: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

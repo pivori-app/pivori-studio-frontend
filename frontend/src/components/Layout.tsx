@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, LayoutDashboard, Zap, Database, BarChart3, CreditCard, Settings, HelpCircle, LogOut } from 'lucide-react'
+import { Menu, X, LayoutDashboard, Zap, Database, BarChart3, CreditCard, HelpCircle, Settings, LogOut } from 'lucide-react'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -25,64 +25,30 @@ export default function Layout({ children }: LayoutProps) {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
+    <div className="flex h-screen bg-white overflow-hidden">
       {/* Sidebar */}
       <aside style={{
-        position: sidebarOpen ? 'relative' : 'fixed',
-        left: 0,
-        top: 0,
-        width: sidebarOpen ? '250px' : '0px',
-        height: '100vh',
-        backgroundColor: '#FFFFFF',
-        borderRight: sidebarOpen ? '1px solid #E5E5EA' : 'none',
-        transition: 'all 300ms ease',
-        zIndex: 1000,
-        overflowY: 'auto',
-        boxShadow: sidebarOpen ? '0 4px 12px rgba(0, 0, 0, 0.05)' : 'none'
-      }}>
+        width: sidebarOpen ? '288px' : '0px',
+        transition: 'width 300ms ease-in-out'
+      }} className="bg-white border-r border-gray-200 overflow-hidden flex flex-col shadow-sm">
         {/* Sidebar Header */}
-        <div style={{
-          padding: '24px 16px',
-          borderBottom: '1px solid #E5E5EA',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          cursor: 'pointer'
-        }}
-        onClick={() => navigate('/')}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #007AFF 0%, #AF52DE 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '20px',
-            fontWeight: '700'
-          }}>
-            ✦
-          </div>
-          <div>
-            <div style={{
-              fontSize: '16px',
-              fontWeight: '700',
-              color: '#000000'
-            }}>
-              Pivori
+        <div 
+          onClick={() => navigate('/')}
+          className="px-4 py-6 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+              ✦
             </div>
-            <div style={{
-              fontSize: '12px',
-              color: '#666666'
-            }}>
-              Studio
+            <div>
+              <div className="text-base font-bold text-gray-900">Pivori</div>
+              <div className="text-xs text-gray-600">Studio</div>
             </div>
           </div>
         </div>
 
         {/* Sidebar Menu */}
-        <nav style={{ padding: '16px 0' }}>
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.path)
@@ -90,174 +56,58 @@ export default function Layout({ children }: LayoutProps) {
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  backgroundColor: active ? '#F5F5F7' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: active ? '#007AFF' : '#666666',
-                  fontSize: '14px',
-                  fontWeight: active ? '600' : '500',
-                  transition: 'all 200ms ease',
-                  borderLeft: active ? '3px solid #007AFF' : '3px solid transparent'
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.backgroundColor = '#F5F5F7'
-                    e.currentTarget.style.color = '#000000'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = '#666666'
-                  }
-                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  active
+                    ? 'bg-gray-100 text-blue-600 font-semibold border-l-4 border-blue-600'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                <Icon size={18} />
-                <span>{item.label}</span>
+                <Icon size={18} className="flex-shrink-0" />
+                <span className="text-sm font-medium">{item.label}</span>
               </button>
             )
           })}
         </nav>
 
         {/* Sidebar Footer */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: '16px',
-          borderTop: '1px solid #E5E5EA',
-          backgroundColor: '#FFFFFF'
-        }}>
+        <div className="px-3 py-4 border-t border-gray-200">
           <button
             onClick={() => navigate('/logout')}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              backgroundColor: '#F5F5F7',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              color: '#666666',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 200ms ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#E5E5EA'
-              e.currentTarget.style.color = '#000000'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#F5F5F7'
-              e.currentTarget.style.color = '#666666'
-            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 text-sm font-medium"
           >
-            <LogOut size={18} />
+            <LogOut size={18} className="flex-shrink-0" />
             <span>Déconnexion</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        marginLeft: sidebarOpen ? '0px' : '0px'
-      }}>
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header style={{
-          backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #E5E5EA',
-          padding: '16px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100
-        }}>
+        <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-50 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666666',
-              transition: 'all 200ms ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#000000'
-              e.currentTarget.style.backgroundColor = '#F5F5F7'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#666666'
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
           >
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-          }}>
-            <button style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              backgroundColor: '#F5F5F7',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666666',
-              transition: 'all 200ms ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#E5E5EA'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#F5F5F7'
-            }}>
+          <div className="flex items-center gap-4">
+            <button className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition-colors">
               👤
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main style={{
-          flex: 1,
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF'
-        }}>
-          {children}
+        <main className="flex-1 overflow-y-auto bg-white px-8 py-8">
+          <div className="w-full h-full max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
 
         {/* Footer */}
-        <footer style={{
-          backgroundColor: '#F5F5F7',
-          borderTop: '1px solid #E5E5EA',
-          padding: '24px',
-          textAlign: 'center',
-          color: '#666666',
-          fontSize: '12px'
-        }}>
+        <footer className="bg-gray-50 border-t border-gray-200 px-6 py-4 text-center text-xs text-gray-600">
           <p>© 2025 Pivori Studio. Tous droits réservés.</p>
         </footer>
       </div>

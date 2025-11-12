@@ -10,7 +10,6 @@ export default function Dashboard() {
       icon: Plus,
       title: 'Créer une App',
       description: 'Lancez votre première application en 5 minutes',
-      bgColor: '#007AFF',
       action: () => navigate('/new-application'),
     },
     {
@@ -18,7 +17,6 @@ export default function Dashboard() {
       icon: BarChart3,
       title: 'Voir les Stats',
       description: 'Analysez les performances de vos apps',
-      bgColor: '#34C759',
       action: () => navigate('/analytics'),
     },
     {
@@ -26,7 +24,6 @@ export default function Dashboard() {
       icon: HelpCircle,
       title: 'Aide & Tutos',
       description: 'Guides et tutoriels pour débuter',
-      bgColor: '#AF52DE',
       action: () => navigate('/help'),
     },
   ]
@@ -51,265 +48,100 @@ export default function Dashboard() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
+    <div className="w-full h-full bg-white flex flex-col">
       {/* Header */}
-      <div style={{
-        borderBottom: '1px solid #E5E5EA',
-        padding: '32px 24px',
-        backgroundColor: '#FFFFFF'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h1 style={{
-            fontSize: '32px',
-            fontWeight: '700',
-            marginBottom: '8px',
-            color: '#000000'
-          }}>
-            Bonjour! 👋
-          </h1>
-          <p style={{
-            fontSize: '16px',
-            color: '#666666'
-          }}>
-            Créez votre première application en quelques clics
-          </p>
-        </div>
+      <div className="border-b border-gray-200 bg-white px-8 py-6">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          Bonjour! 👋
+        </h1>
+        <p className="text-base text-gray-600">
+          Créez votre première application en quelques clics
+        </p>
       </div>
 
       {/* Main Content */}
-      <div style={{ padding: '32px 24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* Quick Actions */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px',
-            marginBottom: '48px'
-          }}>
-            {quickActions.map((action) => {
-              const Icon = action.icon
-              return (
-                <button
-                  key={action.id}
-                  onClick={action.action}
-                  style={{
-                    backgroundColor: '#F5F5F7',
-                    border: '1px solid #E5E5EA',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 200ms ease',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
-                    e.currentTarget.style.borderColor = '#007AFF'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = 'none'
-                    e.currentTarget.style.borderColor = '#E5E5EA'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  {/* Icon */}
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '16px',
-                    backgroundColor: action.bgColor,
-                    color: 'white'
-                  }}>
-                    <Icon size={24} />
-                  </div>
+      <div className="flex-1 overflow-y-auto px-8 py-8">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {quickActions.map((action) => {
+            const Icon = action.icon
+            return (
+              <button
+                key={action.id}
+                onClick={action.action}
+                className={`bg-white border-l-4 border-r border-t border-b border-gray-200 rounded-xl p-6 text-left hover:shadow-lg transition-all duration-200 cursor-pointer ${
+                  action.id === 'create-app' ? 'border-l-blue-600' :
+                  action.id === 'analytics' ? 'border-l-green-600' :
+                  'border-l-purple-600'
+                }`}
+              >
+                {/* Icon */}
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white mb-4 ${
+                  action.id === 'create-app' ? 'bg-blue-600' :
+                  action.id === 'analytics' ? 'bg-green-600' :
+                  'bg-purple-600'
+                }`}>
+                  <Icon size={24} className="text-white" />
+                </div>
 
-                  {/* Title */}
-                  <h3 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    marginBottom: '8px',
-                    color: '#000000'
-                  }}>
-                    {action.title}
-                  </h3>
+                {/* Title */}
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {action.title}
+                </h3>
 
-                  {/* Description */}
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#666666'
-                  }}>
-                    {action.description}
-                  </p>
-                </button>
-              )
-            })}
+                {/* Description */}
+                <p className="text-sm text-gray-600">
+                  {action.description}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Applications Section */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Mes Applications</h2>
+              <p className="text-sm text-gray-600 mt-1">Gérez et surveillez vos applications</p>
+            </div>
+            <button
+              onClick={() => navigate('/new-application')}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+            >
+              <Plus size={20} />
+              Nouvelle App
+            </button>
           </div>
 
-          {/* Applications Section */}
-          <div style={{ marginBottom: '48px' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px'
-            }}>
-              <div>
-                <h2 style={{
-                  fontSize: '24px',
-                  fontWeight: '700',
-                  marginBottom: '8px',
-                  color: '#000000'
-                }}>
-                  Mes Applications
-                </h2>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#666666'
-                }}>
-                  Gérez et surveillez vos applications
-                </p>
-              </div>
-              <button
-                onClick={() => navigate('/new-application')}
-                style={{
-                  backgroundColor: '#000000',
-                  color: 'white',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'all 200ms ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#333333'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#000000'
-                }}
-              >
-                <Plus size={16} />
-                Nouvelle App
-              </button>
-            </div>
-
-            {/* Applications List */}
-            <div>
-              {applications.map((app) => (
-                <div
-                  key={app.id}
-                  style={{
-                    backgroundColor: '#F5F5F7',
-                    border: '1px solid #E5E5EA',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    marginBottom: '16px',
-                    transition: 'all 200ms ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
-                    e.currentTarget.style.borderColor = '#007AFF'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = 'none'
-                    e.currentTarget.style.borderColor = '#E5E5EA'
-                  }}
-                >
-                  {/* App Header */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '16px'
-                  }}>
-                    <h3 style={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: '#000000'
-                    }}>
-                      {app.name}
-                    </h3>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '4px 12px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      backgroundColor: '#34C759',
-                      color: 'white'
-                    }}>
-                      {app.status}
-                    </span>
-                  </div>
-
-                  {/* App Stats */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '16px'
-                  }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{
-                        fontSize: '20px',
-                        fontWeight: '700',
-                        color: '#007AFF',
-                        marginBottom: '4px'
-                      }}>
-                        {app.users}
-                      </div>
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#666666'
-                      }}>
-                        Utilisateurs
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{
-                        fontSize: '20px',
-                        fontWeight: '700',
-                        color: '#007AFF',
-                        marginBottom: '4px'
-                      }}>
-                        {app.connections}
-                      </div>
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#666666'
-                      }}>
-                        Connexions
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{
-                        fontSize: '20px',
-                        fontWeight: '700',
-                        color: '#007AFF',
-                        marginBottom: '4px'
-                      }}>
-                        {app.lastUpdate}
-                      </div>
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#666666'
-                      }}>
-                        Mise à jour
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* Applications Table */}
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Application</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Utilisateurs</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Connexions</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Mise à jour</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {applications.map((app) => (
+                  <tr key={app.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{app.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{app.users.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{app.connections}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{app.lastUpdate}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-green-700 bg-green-100">
+                        {app.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

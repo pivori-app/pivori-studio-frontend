@@ -122,7 +122,7 @@ export default function Connaissances() {
                   <button
                     onClick={() => handleToggleStatus(knowledge.id)}
                     className={`inline-flex items-center justify-center w-12 h-6 rounded-full transition-colors ${
-                      knowledge.status ? 'bg-blue-500' : 'bg-gray-300'
+                      knowledge.status ? 'bg-white0' : 'bg-gray-300'
                     }`}
                   >
                     <div className={`w-5 h-5 bg-white rounded-full transition-transform ${knowledge.status ? 'translate-x-3' : ''}`} />
@@ -236,7 +236,7 @@ export default function Connaissances() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Activer les connaissances actuelles</label>
-                <button className="w-12 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <button className="w-12 h-6 bg-white0 rounded-full flex items-center justify-center">
                   <div className="w-5 h-5 bg-white rounded-full translate-x-3" />
                 </button>
               </div>
@@ -267,7 +267,7 @@ export default function Connaissances() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+                  className="flex-1 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-white"
                 >
                   Supprimer
                 </button>

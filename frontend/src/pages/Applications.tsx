@@ -134,7 +134,7 @@ export default function Applications() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="text-5xl">{app.icon}</div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-white0 rounded-full"></div>
                 </div>
                 <div className="flex items-center gap-2">
                   {getStatusBadge(app.status)}
@@ -181,7 +181,7 @@ export default function Applications() {
                         </button>
                         <button
                           onClick={() => handleMenuAction('Supprimer', app.id)}
-                          className="w-full text-left px-4 py-2 hover:bg-red-50 transition-colors text-sm text-red-600"
+                          className="w-full text-left px-4 py-2 hover:bg-white transition-colors text-sm text-red-600"
                         >
                           🗑️ Supprimer
                         </button>
@@ -250,7 +250,7 @@ export default function Applications() {
         {/* New Application Card */}
         <Link
           to="/applications/new"
-          className="bg-white rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 flex flex-col items-center justify-center p-8 cursor-pointer group"
+          className="bg-white rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-white transition-all duration-300 flex flex-col items-center justify-center p-8 cursor-pointer group"
         >
           <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">+</div>
           <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">

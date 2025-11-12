@@ -37,23 +37,6 @@ export default function AppleSidebar({ isOpen, onToggle }: AppleSidebarProps) {
     return location.pathname === path || (path === '/' && location.pathname === '/')
   }
 
-  const NavLink = ({ icon: Icon, label, path, id }: any) => (
-    <Link
-      to={path}
-      className={`
-        flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-        ${isActive(path)
-          ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-semibold'
-          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
-        }
-      `}
-      onClick={() => setMobileOpen(false)}
-    >
-      <Icon size={20} />
-      <span className={`${!isOpen && 'hidden md:inline'}`}>{label}</span>
-    </Link>
-  )
-
   return (
     <>
       {/* Mobile Menu Button */}
@@ -66,64 +49,74 @@ export default function AppleSidebar({ isOpen, onToggle }: AppleSidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed md:static top-0 left-0 h-screen bg-white dark:bg-gray-950 
-          border-r border-gray-200 dark:border-gray-800
-          transition-all duration-300 z-40
-          ${mobileOpen ? 'w-64' : 'w-64 md:w-20'}
-          flex flex-col
-        `}
+        style={{
+          width: isOpen ? '280px' : '80px',
+          transition: 'width 300ms ease-in-out'
+        }}
+        className="fixed md:static top-0 left-0 h-screen bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 z-40 flex flex-col"
       >
         {/* Logo Section */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="px-4 py-6 border-b border-gray-200 dark:border-gray-800">
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-lg">✦</span>
             </div>
-            <div className={`${!isOpen && 'hidden md:hidden'}`}>
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white">Pivori</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Studio</p>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">Pivori</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Studio</p>
             </div>
           </Link>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto px-2 py-6 space-y-2">
-          {menuItems.map((item) => (
-            <NavLink key={item.id} {...item} />
-          ))}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            const active = isActive(item.path)
+            return (
+              <Link
+                key={item.id}
+                to={item.path}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 whitespace-nowrap ${
+                  active
+                    ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold border-l-4 border-blue-600'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-900'
+                }`}
+              >
+                <Icon size={20} className="flex-shrink-0" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-200 dark:border-gray-800 p-4 space-y-2">
+        <div className="border-t border-gray-200 dark:border-gray-800 px-3 py-4 space-y-1">
           <Link
             to="/help"
-            className={`
-              flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-              ${isActive('/help')
-                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
-              }
-            `}
             onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 whitespace-nowrap ${
+              isActive('/help')
+                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold border-l-4 border-blue-600'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-900'
+            }`}
           >
-            <HelpCircle size={20} />
-            <span className={`${!isOpen && 'hidden md:inline'}`}>Aide</span>
+            <HelpCircle size={20} className="flex-shrink-0" />
+            <span className="text-sm font-medium">Aide</span>
           </Link>
 
           <Link
             to="/settings"
-            className={`
-              flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-              ${isActive('/settings')
-                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
-              }
-            `}
             onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 whitespace-nowrap ${
+              isActive('/settings')
+                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-semibold border-l-4 border-blue-600'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-900'
+            }`}
           >
-            <Settings size={20} />
-            <span className={`${!isOpen && 'hidden md:inline'}`}>Paramètres</span>
+            <Settings size={20} className="flex-shrink-0" />
+            <span className="text-sm font-medium">Paramètres</span>
           </Link>
         </div>
       </aside>

@@ -23,7 +23,7 @@ export default function Services() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">

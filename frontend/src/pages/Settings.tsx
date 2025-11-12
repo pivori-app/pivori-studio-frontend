@@ -397,7 +397,7 @@ export default function Settings() {
       {activeTab === 'api' && (
         <form onSubmit={handleSubmit} className="space-y-8">
           {saved && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+            <div className="mb-6 p-4 bg-white border border-green-200 rounded-lg flex items-center gap-3">
               <span className="text-green-600 text-xl">✓</span>
               <p className="text-green-800 font-medium">Paramètres sauvegardés avec succès</p>
             </div>
@@ -664,7 +664,7 @@ export default function Settings() {
                       <button
                         onClick={() => handleToggleStatus(knowledge.id)}
                         className={`inline-flex items-center justify-center w-12 h-6 rounded-full transition-colors ${
-                          knowledge.status ? 'bg-blue-500' : 'bg-gray-300'
+                          knowledge.status ? 'bg-white0' : 'bg-gray-300'
                         }`}
                       >
                         <div className={`w-5 h-5 bg-white rounded-full transition-transform ${knowledge.status ? 'translate-x-3' : ''}`} />

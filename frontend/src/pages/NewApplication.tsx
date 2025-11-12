@@ -149,7 +149,7 @@ export default function NewApplication() {
                 onClick={() => handleCategorySelect(cat.value, cat.icon)}
                 className={`p-4 rounded-lg border-2 transition-all duration-200 text-center ${
                   formData.category === cat.value
-                    ? 'border-blue-600 bg-blue-50'
+                    ? 'border-blue-600 bg-white'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >
@@ -175,7 +175,7 @@ export default function NewApplication() {
                 onClick={() => handleTemplateSelect(tmpl.value)}
                 className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
                   formData.template === tmpl.value
-                    ? 'border-blue-600 bg-blue-50'
+                    ? 'border-blue-600 bg-white'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >

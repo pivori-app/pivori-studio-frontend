@@ -27,7 +27,7 @@ function App() {
           <AppleSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
           
           {/* Main Content */}
-          <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'md:ml-0' : 'md:ml-0'}`}>
+          <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'md:ml-80' : 'md:ml-20'}`}>
             <div className="min-h-screen bg-white dark:bg-black">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
