@@ -1,0 +1,21 @@
+{
+  "name": "pivori-studio-v2",
+  "version": "2.0.0",
+  "description": "PIVORI Studio v2.0 - Advanced Financial Dashboard",
+  "private": true,
+  "scripts": {
+    "build": "bash build.sh",
+    "dev": "cd frontend && npm run dev",
+    "test": "cd frontend && npm run test",
+    "lint": "cd frontend && npm run lint"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  }
+}
+
