@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   root: '.',
   publicDir: 'public',
+  base: '/pivori-studio-frontend/',
   
   server: {
     port: 5173,
