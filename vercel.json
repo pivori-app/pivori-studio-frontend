@@ -2,11 +2,10 @@
   "version": 2,
   "name": "pivori-studio",
   "public": true,
-  "buildCommand": "bash build.sh",
+  "buildCommand": "npm install --legacy-peer-deps && cd frontend && npm install --legacy-peer-deps && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "nodeVersion": "22.x",
-  "installCommand": "npm install --legacy-peer-deps",
   "env": [
     {
       "key": "VITE_SUPABASE_URL",
