@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plus, Search, Plug, CheckCircle2, Circle } from 'lucide-react'
 
 interface Connector {
   id: number
@@ -78,152 +79,144 @@ export default function Connecteurs() {
   ])
 
   const [activeTab, setActiveTab] = useState<'applications' | 'api' | 'mcp'>('applications')
-  const [showAddModal, setShowAddModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleConnect = (id: number) => {
     setConnectors(connectors.map(c => c.id === id ? { ...c, connected: !c.connected } : c))
   }
 
   const filteredConnectors = connectors.filter(c => {
-    if (activeTab === 'applications') return ['cloud', 'ai', 'communication'].includes(c.category)
-    if (activeTab === 'api') return ['database', 'workflow'].includes(c.category)
-    return false
+    const matchesTab = activeTab === 'applications' ? ['cloud', 'ai', 'communication'].includes(c.category) :
+                       activeTab === 'api' ? ['database', 'workflow'].includes(c.category) :
+                       false
+    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          c.description.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesTab && matchesSearch
   })
 
+  const tabs = [
+    { id: 'applications', label: 'Applications', count: connectors.filter(c => ['cloud', 'ai', 'communication'].includes(c.category)).length },
+    { id: 'api', label: 'API & Workflow', count: connectors.filter(c => ['database', 'workflow'].includes(c.category)).length },
+    { id: 'mcp', label: 'MCP Personnalisé', count: 0 },
+  ]
+
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Connecteurs</h1>
-        <p className="text-gray-600">Intégrez vos outils préférés pour automatiser vos flux de travail</p>
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            Connecteurs
+          </h1>
+          <p className="text-base text-gray-600 dark:text-gray-400">
+            Intégrez vos outils préférés pour automatiser vos flux de travail
+          </p>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('applications')}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'applications'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Applications
-        </button>
-        <button
-          onClick={() => setActiveTab('api')}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'api'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          API personnalisée
-        </button>
-        <button
-          onClick={() => setActiveTab('mcp')}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'mcp'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          MCP personnalisé
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Rechercher un connecteur..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      {/* Connectors Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {filteredConnectors.map(connector => (
-          <div
-            key={connector.id}
-            className="p-4 border border-gray-200 rounded-lg hover:shadow-lg transition-shadow cursor-pointer"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="text-4xl">{connector.icon}</div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{connector.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{connector.description}</p>
-                </div>
-              </div>
-              {connector.connected && (
-                <div className="text-green-600 text-sm font-medium">✓</div>
-              )}
-            </div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Tabs */}
+        <div className="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
+          {tabs.map((tab) => (
             <button
-              onClick={() => handleConnect(connector.id)}
-              className={`mt-4 w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-                connector.connected
-                  ? 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as 'applications' | 'api' | 'mcp')}
+              className={`px-4 py-3 font-medium whitespace-nowrap transition-colors border-b-2 ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
               }`}
             >
-              {connector.connected ? 'Connecté' : 'Connecter'}
+              {tab.label}
+              {tab.count > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-800 rounded-full text-xs font-medium">
+                  {tab.count}
+                </span>
+              )}
             </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Add Button */}
-      <button
-        onClick={() => setShowAddModal(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-      >
-        <span>+</span>
-        <span>Ajouter des connecteurs</span>
-      </button>
-
-      {/* Add Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Ajouter un connecteur</h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Nom du connecteur"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              />
-              <textarea
-                placeholder="Description"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg h-24"
-              />
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Ajouter
-                </button>
-              </div>
-            </div>
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Rechercher un connecteur..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
-      )}
+
+        {/* Connectors Grid */}
+        {filteredConnectors.length === 0 ? (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center">
+            <Plug size={48} className="mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-600 dark:text-gray-400">
+              Aucun connecteur trouvé
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredConnectors.map((connector) => (
+              <div
+                key={connector.id}
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 hover:shadow-lg transition-shadow"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="text-4xl">{connector.icon}</div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 dark:text-white">
+                        {connector.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                        {connector.category}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleConnect(connector.id)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      connector.connected
+                        ? 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'
+                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    {connector.connected ? (
+                      <CheckCircle2 size={24} />
+                    ) : (
+                      <Circle size={24} />
+                    )}
+                  </button>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                  {connector.description}
+                </p>
+
+                {/* Footer */}
+                <button
+                  onClick={() => handleConnect(connector.id)}
+                  className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${
+                    connector.connected
+                      ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                      : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                  }`}
+                >
+                  {connector.connected ? 'Connecté' : 'Connecter'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

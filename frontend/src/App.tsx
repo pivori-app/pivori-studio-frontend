@@ -12,30 +12,57 @@ import Help from './pages/Help'
 import AppleSidebar from './components/AppleSidebar'
 import ErrorBoundary from './components/ErrorBoundary'
 import { useServiceWorker } from './hooks/useServiceWorker'
-import { useState } from 'react'
+import { AppProvider } from './context/AppContext'
+import { useState, useEffect } from 'react'
 
 function App() {
   // Initialize Service Worker
   useServiceWorker()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [darkMode, setDarkMode] = useState(() => {
+    // Récupérer le mode depuis localStorage
+    const saved = localStorage.getItem('darkMode')
+    if (saved !== null) {
+      return JSON.parse(saved)
+    }
+    // Vérifier la préférence système
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
+
+  // Appliquer le dark mode au document
+  useEffect(() => {
+    const html = document.documentElement
+    if (darkMode) {
+      html.classList.add('dark')
+    } else {
+      html.classList.remove('dark')
+    }
+    localStorage.setItem('darkMode', JSON.stringify(darkMode))
+  }, [darkMode])
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <div className="flex h-screen bg-white dark:bg-black">
+      <AppProvider>
+        <BrowserRouter>
+          <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
           {/* Apple-style Sidebar */}
-          <AppleSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+          <AppleSidebar 
+            isOpen={sidebarOpen} 
+            onToggle={() => setSidebarOpen(!sidebarOpen)}
+            darkMode={darkMode}
+            onDarkModeToggle={() => setDarkMode(!darkMode)}
+          />
           
           {/* Main Content */}
-          <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'md:ml-80' : 'md:ml-20'}`}>
-            <div className="min-h-screen bg-white dark:bg-black">
+          <main className="flex-1 overflow-auto transition-all duration-300">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/applications" element={<Applications />} />
                 <Route path="/applications/new" element={<NewApplication />} />
                 <Route path="/new-application" element={<NewApplication />} />
                 <Route path="/services" element={<Services />} />
-                <Route path="/help" element={<Help />} />
+                <Route path="/aide" element={<Help />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/connecteurs" element={<Connecteurs />} />
                 <Route path="/connaissances" element={<Connaissances />} />
@@ -44,8 +71,9 @@ function App() {
               </Routes>
             </div>
           </main>
-        </div>
-      </BrowserRouter>
+          </div>
+        </BrowserRouter>
+      </AppProvider>
     </ErrorBoundary>
   )
 }

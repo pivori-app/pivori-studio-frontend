@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: pivori-postgres-dev
+    environment:
+      POSTGRES_USER: pivori
+      POSTGRES_PASSWORD: pivori_dev_password
+      POSTGRES_DB: pivori_studio
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pivori"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pivori-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pivori-backend-dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://pivori:pivori_dev_password@postgres:5432/pivori_studio
+      SUPABASE_URL: http://postgres:5432
+      SUPABASE_SERVICE_KEY: dev-service-key
+      JWT_SECRET: dev-jwt-secret-key-change-in-production
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - pivori-network
+
+  # Frontend (development server)
+  frontend:
+    image: node:18-alpine
+    container_name: pivori-frontend-dev
+    working_dir: /app
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_SUPABASE_URL: http://localhost:5432
+      VITE_SUPABASE_ANON_KEY: dev-anon-key
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host"
+    networks:
+      - pivori-network
+
+  # Redis (caching)
+  redis:
+    image: redis:7-alpine
+    container_name: pivori-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pivori-network
+
+  # Adminer (Database UI)
+  adminer:
+    image: adminer:latest
+    container_name: pivori-adminer-dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - pivori-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  pivori-network:
+    driver: bridge
+

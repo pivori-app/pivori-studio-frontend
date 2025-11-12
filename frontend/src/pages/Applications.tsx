@@ -1,292 +1,185 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Plus, Copy, Code2, MoreVertical, Zap, Globe } from 'lucide-react'
+import { useAppContext } from '../context/AppContext'
 
-interface Application {
-  id: number
-  name: string
-  description: string
-  icon: string
-  status: 'active' | 'maintenance' | 'inactive'
-  users: number
-  revenue: string
-  health: number
-}
+const CURRENCIES = [
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'USD', symbol: '$', name: 'Dollar US' },
+  { code: 'GBP', symbol: '£', name: 'Livre Sterling' },
+  { code: 'JPY', symbol: '¥', name: 'Yen Japonais' },
+  { code: 'CAD', symbol: 'C$', name: 'Dollar Canadien' },
+  { code: 'AUD', symbol: 'A$', name: 'Dollar Australien' },
+  { code: 'CHF', symbol: 'CHF', name: 'Franc Suisse' },
+  { code: 'CNY', symbol: '¥', name: 'Yuan Chinois' },
+  { code: 'INR', symbol: '₹', name: 'Roupie Indienne' },
+  { code: 'MXN', symbol: '$', name: 'Peso Mexicain' }
+]
 
 export default function Applications() {
-  const [applications, setApplications] = useState<Application[]>([
-    {
-      id: 1,
-      name: 'LocaSimple',
-      description: 'Gestion locative intelligente',
-      icon: '🏠',
-      status: 'active',
-      users: 1247,
-      revenue: '€15 420',
-      health: 98
-    },
-    {
-      id: 2,
-      name: 'Wingly',
-      description: 'Plateforme de vols partagés',
-      icon: '✈️',
-      status: 'active',
-      users: 892,
-      revenue: '€8 930',
-      health: 95
-    },
-    {
-      id: 3,
-      name: 'ThémaLink',
-      description: 'Liens thématiques intelligents',
-      icon: '🔗',
-      status: 'maintenance',
-      users: 2156,
-      revenue: '€12 340',
-      health: 87
-    },
-    {
-      id: 4,
-      name: 'HeroChildren',
-      description: 'Plateforme éducative pour enfants',
-      icon: '🦸',
-      status: 'active',
-      users: 3421,
-      revenue: '€24 560',
-      health: 99
-    }
-  ])
+  const { applications, updateApplication } = useAppContext()
+  const [selectedApp, setSelectedApp] = useState<string | null>(null)
+  const [showCurrencyMenu, setShowCurrencyMenu] = useState<string | null>(null)
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; text: string; label: string }> = {
-      active: { bg: 'bg-green-100', text: 'text-green-800', label: 'Actif' },
-      maintenance: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Maintenance' },
-      inactive: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Inactif' }
+    const statusMap: Record<string, { bg: string; text: string; icon: string; label: string }> = {
+      active: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', icon: '●', label: 'Actif' },
+      maintenance: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-400', icon: '●', label: 'Maintenance' },
+      inactive: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-700 dark:text-gray-400', icon: '●', label: 'Inactif' }
     }
     const config = statusMap[status] || statusMap.active
     return (
-      <span className={`inline-block px-3 py-1 ${config.bg} ${config.text} rounded-full text-xs font-medium`}>
+      <span className={`inline-flex items-center gap-2 px-3 py-1 ${config.bg} ${config.text} rounded-full text-sm font-medium`}>
+        <span className="w-2 h-2 rounded-full bg-current" />
         {config.label}
       </span>
     )
   }
 
-  const handleGenerate = (appId: number) => {
-    alert(`Génération du code pour l'application ${appId}...`)
+  const getCurrencySymbol = (code: string) => {
+    const currency = CURRENCIES.find(c => c.code === code)
+    return currency ? currency.symbol : code
   }
 
-  const handleClone = (appId: number) => {
-    alert(`Clonage de l'application ${appId}...`)
+  const handleCurrencyChange = (appId: string, newCurrency: string) => {
+    updateApplication(appId, { currency: newCurrency })
+    setShowCurrencyMenu(null)
   }
-
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  const toggleMenu = (appId: number) => {
-    setOpenMenuId(openMenuId === appId ? null : appId)
-  }
-
-  const handleMenuAction = (action: string, appId: number) => {
-    alert(`${action} pour l'application ${appId}`)
-    setOpenMenuId(null)
-  }
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpenMenuId(null)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-7xl mx-auto p-6 md:p-8">
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
             Mes Applications
-          </h2>
-          <p className="text-gray-600">
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Gérez et surveillez toutes vos applications
           </p>
         </div>
         <Link
           to="/applications/new"
-          className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 w-full md:w-auto"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 self-start sm:self-auto"
         >
-          <span className="text-xl">+</span>
-          Nouvelle Application
+          <Plus size={20} />
+          Nouvelle App
         </Link>
       </div>
 
       {/* Applications Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {applications.map((app) => (
-          <div
-            key={app.id}
-            className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300"
+      {applications.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">Aucune application créée</p>
+          <Link
+            to="/applications/new"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
           >
-            {/* App Header */}
-            <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 border-b border-gray-200">
+            <Plus size={18} />
+            Créer une application
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {applications.map((app) => (
+            <div
+              key={app.id}
+              className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 hover:shadow-lg dark:hover:shadow-gray-900/50 transition-all duration-300"
+            >
+              {/* App Header */}
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="text-5xl">{app.icon}</div>
-                  <div className="w-3 h-3 bg-white0 rounded-full"></div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(app.status)}
-                  <div className="relative" ref={menuRef}>
-                    <button
-                      onClick={() => toggleMenu(app.id)}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                      title="Plus d'options"
-                    >
-                      <span className="text-xl font-bold text-gray-600">...</span>
-                    </button>
-                    {openMenuId === app.id && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 py-1">
-                        <button
-                          onClick={() => handleMenuAction('Éditer', app.id)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm text-gray-700"
-                        >
-                          ✏️ Éditer
-                        </button>
-                        <button
-                          onClick={() => handleMenuAction('Dupliquer', app.id)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm text-gray-700"
-                        >
-                          📋 Dupliquer
-                        </button>
-                        <button
-                          onClick={() => handleMenuAction('Paramètres', app.id)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm text-gray-700"
-                        >
-                          ⚙️ Paramètres
-                        </button>
-                        <button
-                          onClick={() => handleMenuAction('Analyser', app.id)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm text-gray-700"
-                        >
-                          📊 Analyser
-                        </button>
-                        <hr className="my-1" />
-                        <button
-                          onClick={() => handleMenuAction('Archiver', app.id)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-sm text-orange-600"
-                        >
-                          📦 Archiver
-                        </button>
-                        <button
-                          onClick={() => handleMenuAction('Supprimer', app.id)}
-                          className="w-full text-left px-4 py-2 hover:bg-white transition-colors text-sm text-red-600"
-                        >
-                          🗑️ Supprimer
-                        </button>
-                      </div>
-                    )}
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">{app.icon}</div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {app.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {app.description}
+                    </p>
                   </div>
                 </div>
+                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                  <MoreVertical size={20} className="text-gray-600 dark:text-gray-400" />
+                </button>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-1">{app.name}</h3>
-              <p className="text-gray-600 text-sm">{app.description}</p>
-            </div>
 
-            {/* App Stats */}
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
                 <div>
-                  <p className="text-xs text-gray-600 mb-1">Utilisateurs</p>
-                  <p className="text-lg font-bold text-blue-600">{app.users.toLocaleString()}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">Utilisateurs</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {app.users.toLocaleString()}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600 mb-1">Revenus</p>
-                  <p className="text-lg font-bold text-green-600">{app.revenue}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">Revenu</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {getCurrencySymbol(app.currency)}{(app.revenue / 1000).toFixed(1)}k
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600 mb-1">Santé</p>
-                  <p className="text-lg font-bold text-emerald-600">{app.health}%</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">Santé</p>
+                  <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        app.health >= 90 ? 'bg-green-500' :
+                        app.health >= 70 ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`}
+                      style={{ width: `${app.health}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{app.health}%</p>
                 </div>
               </div>
-              <div className="text-xs text-gray-500 pt-2">
-                Mis à jour il y a 2 min
+
+              {/* Currency & Status */}
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCurrencyMenu(showCurrencyMenu === app.id ? null : app.id)}
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
+                  >
+                    <Globe size={16} />
+                    {app.currency}
+                  </button>
+                  
+                  {showCurrencyMenu === app.id && (
+                    <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 min-w-max">
+                      {CURRENCIES.map((curr) => (
+                        <button
+                          key={curr.code}
+                          onClick={() => handleCurrencyChange(app.id, curr.code)}
+                          className={`w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                            app.currency === curr.code ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+                          }`}
+                        >
+                          {curr.symbol} {curr.code} - {curr.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {getStatusBadge(app.status)}
               </div>
 
-              {/* Health Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${app.health}%` }}
-                ></div>
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                  <Code2 size={18} />
+                  Générer
+                </button>
+                <button className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                  <Copy size={18} />
+                  Cloner
+                </button>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="p-6 bg-gray-50 border-t border-gray-200 flex gap-3">
-              <button
-                onClick={() => handleGenerate(app.id)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
-              >
-                Générer
-              </button>
-              <button
-                onClick={() => handleClone(app.id)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
-              >
-                Cloner
-              </button>
-              <Link
-                to="/applications/new"
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm text-center"
-              >
-                Nouveau
-              </Link>
-            </div>
-          </div>
-        ))}
-
-        {/* New Application Card */}
-        <Link
-          to="/applications/new"
-          className="bg-white rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-white transition-all duration-300 flex flex-col items-center justify-center p-8 cursor-pointer group"
-        >
-          <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">+</div>
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-            Nouvelle Application
-          </h3>
-          <p className="text-gray-600 text-sm text-center mt-2">
-            Créez une nouvelle application en quelques clics
-          </p>
-        </Link>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-          <p className="text-gray-700 text-sm font-medium mb-1">Applications</p>
-          <p className="text-3xl font-bold text-blue-600">{applications.length}</p>
+          ))}
         </div>
-        <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
-          <p className="text-gray-700 text-sm font-medium mb-1">Utilisateurs totaux</p>
-          <p className="text-3xl font-bold text-green-600">
-            {applications.reduce((sum, app) => sum + app.users, 0).toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
-          <p className="text-gray-700 text-sm font-medium mb-1">Revenus totaux</p>
-          <p className="text-3xl font-bold text-purple-600">
-            €{applications.reduce((sum, app) => sum + parseInt(app.revenue.replace(/[€\s]/g, '')), 0).toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg p-4">
-          <p className="text-gray-700 text-sm font-medium mb-1">Santé moyenne</p>
-          <p className="text-3xl font-bold text-emerald-600">
-            {Math.round(applications.reduce((sum, app) => sum + app.health, 0) / applications.length)}%
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

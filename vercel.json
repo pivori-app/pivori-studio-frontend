@@ -1,0 +1,73 @@
+{
+  "version": 2,
+  "name": "pivori-studio",
+  "public": true,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "env": [
+    {
+      "key": "VITE_SUPABASE_URL",
+      "value": "@supabase_url"
+    },
+    {
+      "key": "VITE_SUPABASE_ANON_KEY",
+      "value": "@supabase_anon_key"
+    },
+    {
+      "key": "VITE_API_URL",
+      "value": "@api_url"
+    }
+  ],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, immutable"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ]
+}
+
