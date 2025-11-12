@@ -1,0 +1,17 @@
+{
+  "buildCommand": "vite build",
+  "devCommand": "vite --port $PORT",
+  "installCommand": "npm install",
+  "outputDirectory": "dist",
+  "public": true,
+  "env": {
+    "VITE_APP_TITLE": "PIVORI Studio",
+    "VITE_APP_ID": "pivori-studio-v2"
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

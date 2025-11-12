@@ -1,145 +1,317 @@
+import { useNavigate } from 'react-router-dom'
+import { Plus, BarChart3, HelpCircle } from 'lucide-react'
+
 export default function Dashboard() {
-  const stats = [
+  const navigate = useNavigate()
+
+  const quickActions = [
+    {
+      id: 'create-app',
+      icon: Plus,
+      title: 'Créer une App',
+      description: 'Lancez votre première application en 5 minutes',
+      bgColor: '#007AFF',
+      action: () => navigate('/new-application'),
+    },
+    {
+      id: 'analytics',
+      icon: BarChart3,
+      title: 'Voir les Stats',
+      description: 'Analysez les performances de vos apps',
+      bgColor: '#34C759',
+      action: () => navigate('/analytics'),
+    },
+    {
+      id: 'help',
+      icon: HelpCircle,
+      title: 'Aide & Tutos',
+      description: 'Guides et tutoriels pour débuter',
+      bgColor: '#AF52DE',
+      action: () => navigate('/help'),
+    },
+  ]
+
+  const applications = [
     {
       id: 1,
-      label: 'Services',
-      value: '15',
-      color: 'blue',
-      icon: '⚙️',
-      description: 'Services actifs'
+      name: 'Mon App Fitness',
+      status: 'En ligne',
+      users: 1250,
+      connections: 45,
+      lastUpdate: '2 heures',
     },
     {
       id: 2,
-      label: 'Sains',
-      value: '15',
-      color: 'green',
-      icon: '✓',
-      description: 'Services en bonne santé'
+      name: 'Plateforme E-learning',
+      status: 'En ligne',
+      users: 3420,
+      connections: 128,
+      lastUpdate: '1 heure',
     },
-    {
-      id: 3,
-      label: 'Disponibilité',
-      value: '99.9%',
-      color: 'emerald',
-      icon: '📈',
-      description: 'Uptime mensuel'
-    }
   ]
 
-  const getColorClasses = (color: string) => {
-    const colors: Record<string, string> = {
-      blue: 'from-blue-50 to-blue-100 border-blue-200',
-      green: 'from-green-50 to-green-100 border-green-200',
-      emerald: 'from-emerald-50 to-emerald-100 border-emerald-200'
-    }
-    return colors[color] || colors.blue
-  }
-
-  const getTextColorClasses = (color: string) => {
-    const colors: Record<string, string> = {
-      blue: 'text-blue-600',
-      green: 'text-green-600',
-      emerald: 'text-emerald-600'
-    }
-    return colors[color] || colors.blue
-  }
-
   return (
-    <div className="w-full">
+    <div style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          Tableau de bord
-        </h2>
-        <p className="text-gray-600">
-          Aperçu en temps réel de vos services et de leur état de santé
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {stats.map((stat) => (
-          <div
-            key={stat.id}
-            className={`bg-gradient-to-br ${getColorClasses(stat.color)} border rounded-lg p-6 hover:shadow-lg transition-shadow duration-300`}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-gray-700 text-sm font-medium mb-1">
-                  {stat.label}
-                </p>
-                <p className={`text-3xl md:text-4xl font-bold ${getTextColorClasses(stat.color)}`}>
-                  {stat.value}
-                </p>
-              </div>
-              <span className="text-3xl">{stat.icon}</span>
-            </div>
-            <p className="text-gray-600 text-xs md:text-sm">
-              {stat.description}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Recent Activity Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
-          Activité récente
-        </h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-blue-600">📊</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-gray-900 font-medium truncate">
-                Tous les services sont opérationnels
-              </p>
-              <p className="text-gray-500 text-sm">
-                Il y a 2 minutes
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-green-600">✓</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-gray-900 font-medium truncate">
-                Sauvegarde automatique complétée
-              </p>
-              <p className="text-gray-500 text-sm">
-                Il y a 1 heure
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-purple-600">🔄</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-gray-900 font-medium truncate">
-                Mise à jour de sécurité appliquée
-              </p>
-              <p className="text-gray-500 text-sm">
-                Il y a 3 heures
-              </p>
-            </div>
-          </div>
+      <div style={{
+        borderBottom: '1px solid #E5E5EA',
+        padding: '32px 24px',
+        backgroundColor: '#FFFFFF'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h1 style={{
+            fontSize: '32px',
+            fontWeight: '700',
+            marginBottom: '8px',
+            color: '#000000'
+          }}>
+            Bonjour! 👋
+          </h1>
+          <p style={{
+            fontSize: '16px',
+            color: '#666666'
+          }}>
+            Créez votre première application en quelques clics
+          </p>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
-          Voir les détails
-        </button>
-        <button className="bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-3 px-6 rounded-lg transition-colors duration-200">
-          Exporter le rapport
-        </button>
+      {/* Main Content */}
+      <div style={{ padding: '32px 24px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          {/* Quick Actions */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '24px',
+            marginBottom: '48px'
+          }}>
+            {quickActions.map((action) => {
+              const Icon = action.icon
+              return (
+                <button
+                  key={action.id}
+                  onClick={action.action}
+                  style={{
+                    backgroundColor: '#F5F5F7',
+                    border: '1px solid #E5E5EA',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 200ms ease',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
+                    e.currentTarget.style.borderColor = '#007AFF'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none'
+                    e.currentTarget.style.borderColor = '#E5E5EA'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}
+                >
+                  {/* Icon */}
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px',
+                    backgroundColor: action.bgColor,
+                    color: 'white'
+                  }}>
+                    <Icon size={24} />
+                  </div>
+
+                  {/* Title */}
+                  <h3 style={{
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: '#000000'
+                  }}>
+                    {action.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#666666'
+                  }}>
+                    {action.description}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Applications Section */}
+          <div style={{ marginBottom: '48px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px'
+            }}>
+              <div>
+                <h2 style={{
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  marginBottom: '8px',
+                  color: '#000000'
+                }}>
+                  Mes Applications
+                </h2>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#666666'
+                }}>
+                  Gérez et surveillez vos applications
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/new-application')}
+                style={{
+                  backgroundColor: '#000000',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 200ms ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#333333'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#000000'
+                }}
+              >
+                <Plus size={16} />
+                Nouvelle App
+              </button>
+            </div>
+
+            {/* Applications List */}
+            <div>
+              {applications.map((app) => (
+                <div
+                  key={app.id}
+                  style={{
+                    backgroundColor: '#F5F5F7',
+                    border: '1px solid #E5E5EA',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    marginBottom: '16px',
+                    transition: 'all 200ms ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    e.currentTarget.style.borderColor = '#007AFF'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none'
+                    e.currentTarget.style.borderColor = '#E5E5EA'
+                  }}
+                >
+                  {/* App Header */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: '#000000'
+                    }}>
+                      {app.name}
+                    </h3>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      backgroundColor: '#34C759',
+                      color: 'white'
+                    }}>
+                      {app.status}
+                    </span>
+                  </div>
+
+                  {/* App Stats */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '16px'
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: '#007AFF',
+                        marginBottom: '4px'
+                      }}>
+                        {app.users}
+                      </div>
+                      <div style={{
+                        fontSize: '12px',
+                        color: '#666666'
+                      }}>
+                        Utilisateurs
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: '#007AFF',
+                        marginBottom: '4px'
+                      }}>
+                        {app.connections}
+                      </div>
+                      <div style={{
+                        fontSize: '12px',
+                        color: '#666666'
+                      }}>
+                        Connexions
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: '#007AFF',
+                        marginBottom: '4px'
+                      }}>
+                        {app.lastUpdate}
+                      </div>
+                      <div style={{
+                        fontSize: '12px',
+                        color: '#666666'
+                      }}>
+                        Mise à jour
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
