@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules/
+.npm
+.yarn
+
+# Build
+dist/
+build/
+*.log
+
+# Development
+.env.local
+.env.development
+.env.test
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation
+*.md
+docs/
+
+# Backend
+backend/
+frontend/
+
+# Tests
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+docker-compose*.yml
+Dockerfile
+Makefile
+vercel.json
+
