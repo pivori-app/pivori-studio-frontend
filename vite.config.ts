@@ -26,12 +26,12 @@ export default defineConfig({
     target: 'ES2020',
     outDir: 'dist',
     minify: 'terser',
-    sourcemap: process.env.NODE_ENV === 'development',
+    sourcemap: false,
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000,
     terserOptions: {
       compress: {
-        drop_console: process.env.NODE_ENV === 'production',
+        drop_console: true,
         drop_debugger: true
       }
     },
