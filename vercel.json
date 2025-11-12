@@ -2,8 +2,8 @@
   "version": 2,
   "name": "pivori-studio",
   "public": true,
-  "buildCommand": "npm install --legacy-peer-deps && cd frontend && npm install --legacy-peer-deps && npm run build",
-  "outputDirectory": "frontend/dist",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "framework": "vite",
   "nodeVersion": "22.x",
   "env": [
