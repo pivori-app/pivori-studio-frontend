@@ -129,7 +129,7 @@ export default function Layout({ children }: LayoutProps) {
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -138,9 +138,8 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex-1 flex flex-col overflow-hidden w-full">
         {/* Header */}
         <header className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 sticky top-0 z-50 flex items-center justify-between`}>
-          {/* Left side - Empty on mobile, can add logo on tablet/desktop */}
+          {/* Left side - Logo on desktop only */}
           <div className="flex-1 md:flex-none">
-            {/* Logo for tablet/desktop only */}
             <div className="hidden md:flex items-center gap-2">
               <div className="text-sm font-semibold text-gray-900 dark:text-white">
                 Pivori Studio
@@ -148,8 +147,8 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
 
-          {/* Right side - Dark mode toggle and hamburger menu */}
-          <div className="flex items-center gap-2 md:gap-4">
+          {/* Right side - Buttons aligned to the right */}
+          <div className="flex items-center justify-end gap-2 md:gap-4 ml-auto">
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -168,18 +167,20 @@ export default function Layout({ children }: LayoutProps) {
               👤
             </button>
 
-            {/* Hamburger Menu - Right side for mobile/tablet */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`md:hidden p-2 rounded-lg transition-colors ${
-                isDarkMode
-                  ? 'hover:bg-gray-700 text-gray-300'
-                  : 'hover:bg-gray-100 text-gray-700'
-              }`}
-              title={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-            >
-              {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {/* Hamburger Menu - ALWAYS on the right, visible only on mobile */}
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDarkMode
+                    ? 'hover:bg-gray-700 text-gray-300'
+                    : 'hover:bg-gray-100 text-gray-700'
+                }`}
+                title={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              >
+                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            )}
           </div>
         </header>
 
