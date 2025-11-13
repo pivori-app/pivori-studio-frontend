@@ -3,7 +3,7 @@
   "name": "pivori-studio-v2",
   "public": true,
   "buildCommand": "npm ci --legacy-peer-deps && npm run build",
-  "outputDirectory": "dist",
+  "outputDirectory": "dist/static",
   "framework": "vite",
   "rewrites": [
     {
