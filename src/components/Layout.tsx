@@ -7,7 +7,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const navigate = useNavigate()
@@ -18,14 +18,17 @@ export default function Layout({ children }: LayoutProps) {
     const handleResize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
-      if (!mobile) {
+      // Keep sidebar open on desktop, closed on mobile
+      if (!mobile && !sidebarOpen) {
         setSidebarOpen(true)
       }
     }
 
     window.addEventListener('resize', handleResize)
+    // Call once on mount to set initial state
+    handleResize()
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [sidebarOpen])
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
