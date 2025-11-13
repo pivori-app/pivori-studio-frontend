@@ -133,7 +133,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Right side - Buttons aligned to the right */}
-          <div className="flex items-center justify-end gap-2 md:gap-4 w-full md:w-auto">
+          <div className="flex items-center justify-end gap-1 md:gap-4 w-full md:w-auto">
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -152,7 +152,7 @@ export default function Layout({ children }: LayoutProps) {
               👤
             </button>
 
-            {/* Hamburger Menu - Visible on mobile, hidden on desktop/tablet */}
+            {/* Hamburger Menu - LAST (rightmost), visible on mobile, hidden on desktop/tablet */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className={`md:hidden p-2 rounded-lg transition-colors ${
