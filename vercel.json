@@ -5,7 +5,6 @@
   "buildCommand": "npm ci --legacy-peer-deps && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "nodeVersion": "22.x",
   "env": [
     {
       "key": "VITE_SUPABASE_URL",
