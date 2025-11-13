@@ -1,15 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, LayoutDashboard, Zap, Database, BarChart3, CreditCard, HelpCircle, Settings, LogOut } from 'lucide-react'
+import { Menu, X, LayoutDashboard, Zap, Database, BarChart3, CreditCard, HelpCircle, Settings, LogOut, Moon, Sun } from 'lucide-react'
 
 interface LayoutProps {
   children: React.ReactNode
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Handle responsive
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (!mobile) {
+        setSidebarOpen(true)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
+  }, [location.pathname, isMobile])
 
   const menuItems = [
     { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
@@ -25,89 +48,147 @@ export default function Layout({ children }: LayoutProps) {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      {/* Sidebar */}
-      <aside style={{
-        width: sidebarOpen ? '288px' : '0px',
-        transition: 'width 300ms ease-in-out'
-      }} className="bg-white border-r border-gray-200 overflow-hidden flex flex-col shadow-sm">
+    <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} overflow-hidden`}>
+      {/* Sidebar - Hidden on mobile, visible on tablet/desktop */}
+      <aside 
+        className={`
+          fixed md:static top-0 left-0 h-full z-40
+          transition-all duration-300 ease-in-out
+          ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
+          ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}
+          border-r shadow-sm overflow-hidden flex flex-col
+          w-64 md:w-72
+        `}
+      >
         {/* Sidebar Header */}
         <div 
-          onClick={() => navigate('/')}
-          className="px-4 py-6 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => {
+            navigate('/')
+            if (isMobile) setSidebarOpen(false)
+          }}
+          className={`px-4 py-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} cursor-pointer ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors`}
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
               ✦
             </div>
             <div>
-              <div className="text-base font-bold text-gray-900">Pivori</div>
-              <div className="text-xs text-gray-600">Studio</div>
+              <div className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Pivori</div>
+              <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Studio</div>
             </div>
           </div>
         </div>
 
         {/* Sidebar Menu */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className={`flex-1 px-3 py-4 space-y-1 overflow-y-auto ${isDarkMode ? 'scrollbar-dark' : ''}`}>
           {menuItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.path)
             return (
               <button
                 key={item.id}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  navigate(item.path)
+                  if (isMobile) setSidebarOpen(false)
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                   active
-                    ? 'bg-gray-100 text-blue-600 font-semibold border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    ? `${isDarkMode ? 'bg-gray-700 text-blue-400 border-l-4 border-blue-400' : 'bg-gray-100 text-blue-600 border-l-4 border-blue-600'} font-semibold`
+                    : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} hover:text-gray-900`
                 }`}
               >
                 <Icon size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-sm font-medium truncate">{item.label}</span>
               </button>
             )
           })}
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="px-3 py-4 border-t border-gray-200">
+        <div className={`px-3 py-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <button
-            onClick={() => navigate('/logout')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 text-sm font-medium"
+            onClick={() => {
+              navigate('/logout')
+              if (isMobile) setSidebarOpen(false)
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
             <LogOut size={18} className="flex-shrink-0" />
-            <span>Déconnexion</span>
+            <span className="truncate">Déconnexion</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-50 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
-          >
-            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          <div className="flex items-center gap-4">
-            <button className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition-colors">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
+        {/* Header */}
+        <header className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 sticky top-0 z-50 flex items-center justify-between`}>
+          {/* Left side - Empty on mobile, can add logo on tablet/desktop */}
+          <div className="flex-1 md:flex-none">
+            {/* Logo for tablet/desktop only */}
+            <div className="hidden md:flex items-center gap-2">
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                Pivori Studio
+              </div>
+            </div>
+          </div>
+
+          {/* Right side - Dark mode toggle and hamburger menu */}
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              title="Mode sombre"
+            >
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
+            {/* User Profile */}
+            <button className={`w-10 h-10 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} hover:${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} flex items-center justify-center transition-colors`}>
               👤
+            </button>
+
+            {/* Hamburger Menu - Right side for mobile/tablet */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className={`md:hidden p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? 'hover:bg-gray-700 text-gray-300'
+                  : 'hover:bg-gray-100 text-gray-700'
+              }`}
+              title={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            >
+              {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-white px-8 py-8">
+        <main className={`flex-1 overflow-y-auto ${isDarkMode ? 'bg-gray-900' : 'bg-white'} px-4 md:px-8 py-4 md:py-8`}>
           <div className="w-full h-full max-w-7xl mx-auto">
             {children}
           </div>
         </main>
 
         {/* Footer */}
-        <footer className="bg-gray-50 border-t border-gray-200 px-6 py-4 text-center text-xs text-gray-600">
+        <footer className={`${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-600'} border-t px-4 md:px-6 py-4 text-center text-xs`}>
           <p>© 2025 Pivori Studio. Tous droits réservés.</p>
         </footer>
       </div>
