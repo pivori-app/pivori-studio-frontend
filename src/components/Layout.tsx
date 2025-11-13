@@ -7,35 +7,22 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768)
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Handle responsive
+  // Open sidebar on desktop on mount
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768
-      setIsMobile(mobile)
-      // Keep sidebar open on desktop, closed on mobile
-      if (!mobile && !sidebarOpen) {
-        setSidebarOpen(true)
-      }
+    if (window.innerWidth >= 768) {
+      setSidebarOpen(true)
     }
+  }, [])
 
-    window.addEventListener('resize', handleResize)
-    // Call once on mount to set initial state
-    handleResize()
-    return () => window.removeEventListener('resize', handleResize)
-  }, [sidebarOpen])
-
-  // Close sidebar on route change (mobile)
+  // Close sidebar on route change
   useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false)
-    }
-  }, [location.pathname, isMobile])
+    setSidebarOpen(false)
+  }, [location.pathname])
 
   const menuItems = [
     { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
@@ -57,7 +44,7 @@ export default function Layout({ children }: LayoutProps) {
         className={`
           fixed md:static top-0 left-0 h-full z-40
           transition-all duration-300 ease-in-out
-          ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}
           border-r shadow-sm overflow-hidden flex flex-col
           w-64 md:w-72
@@ -67,7 +54,7 @@ export default function Layout({ children }: LayoutProps) {
         <div 
           onClick={() => {
             navigate('/')
-            if (isMobile) setSidebarOpen(false)
+            setSidebarOpen(false)
           }}
           className={`px-4 py-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} cursor-pointer ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors`}
         >
@@ -92,7 +79,7 @@ export default function Layout({ children }: LayoutProps) {
                 key={item.id}
                 onClick={() => {
                   navigate(item.path)
-                  if (isMobile) setSidebarOpen(false)
+                  setSidebarOpen(false)
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                   active
@@ -112,7 +99,7 @@ export default function Layout({ children }: LayoutProps) {
           <button
             onClick={() => {
               navigate('/logout')
-              if (isMobile) setSidebarOpen(false)
+              setSidebarOpen(false)
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium ${
               isDarkMode
@@ -127,9 +114,9 @@ export default function Layout({ children }: LayoutProps) {
       </aside>
 
       {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
+      {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -139,16 +126,14 @@ export default function Layout({ children }: LayoutProps) {
         {/* Header */}
         <header className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 sticky top-0 z-50 flex items-center justify-between`}>
           {/* Left side - Logo on desktop only */}
-          <div className="flex-1 md:flex-none">
-            <div className="hidden md:flex items-center gap-2">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                Pivori Studio
-              </div>
+          <div className="hidden md:flex flex-1 items-center gap-2">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+              Pivori Studio
             </div>
           </div>
 
           {/* Right side - Buttons aligned to the right */}
-          <div className="flex items-center justify-end gap-2 md:gap-4 ml-auto">
+          <div className="flex items-center justify-end gap-2 md:gap-4 w-full md:w-auto">
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -167,20 +152,18 @@ export default function Layout({ children }: LayoutProps) {
               👤
             </button>
 
-            {/* Hamburger Menu - ALWAYS on the right, visible only on mobile */}
-            {isMobile && (
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isDarkMode
-                    ? 'hover:bg-gray-700 text-gray-300'
-                    : 'hover:bg-gray-100 text-gray-700'
-                }`}
-                title={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-              >
-                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            )}
+            {/* Hamburger Menu - Visible on mobile, hidden on desktop/tablet */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className={`md:hidden p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? 'hover:bg-gray-700 text-gray-300'
+                  : 'hover:bg-gray-100 text-gray-700'
+              }`}
+              title={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            >
+              {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </header>
 
